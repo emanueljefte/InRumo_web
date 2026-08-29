@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  /* Cores personalizadas */
+  --color-background: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-primary: #c9932e;
+  --color-primary-muted: #fdf3e1;
+  --color-text: #1a1a1f;
+  --color-text-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --color-success: #15803d;
+  --color-error: #b91c1c;
+
+  /* Fontes */
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+}
