@@ -1,235 +1,204 @@
-import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
-  Bell, 
-  Lightbulb, 
-  Compass, 
-  GraduationCap, 
-  ArrowRight 
+  Sparkles, 
+  ArrowRight, 
+  MessageSquare, 
+  Award, 
+  CheckCircle2, 
+  BookOpen, 
+  RotateCcw,
+  Compass
 } from 'lucide-react';
+import { useAuth } from '../../application/auth/useAuth';
+import { useTestResult } from '../../application/test/useTestResult';
+import { SupabaseTestRepository } from '../../data/supabase/SupabaseTestRepository';
+import { COURSE_LABELS } from '../../domain/course/courseLabels';
+import type { CourseId } from '../../domain/test/TestQuestion';
 
-interface OtherArea {
-  title: string;
-  percentage: number;
-  label: string;
-}
-
-const OTHER_AREAS: OtherArea[] = [
-  { title: 'Matemática Aplicada', percentage: 85, label: 'Afinidade forte' },
-  { title: 'Física Computacional', percentage: 78, label: 'Afinidade moderada' },
-  { title: 'Gestão de Informação', percentage: 72, label: 'Afinidade moderada' },
-];
+const testRepository = new SupabaseTestRepository();
 
 export default function CandidateResultsPage() {
-  return (
-    <div className="max-w-[1100px] mx-auto space-y-8 font-sans text-[#1a1b22] antialiased">
-      
-      {/* Notificações & Perfil */}
-      <div className="flex justify-end items-center gap-3">
-        <button 
-          type="button"
-          className="p-2.5 text-[#504536] hover:text-[#1a1b22] hover:bg-[#eeedf7] rounded-full transition-colors relative"
-          aria-label="Notificações"
-        >
-          <Bell size={20} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-[#c9932e] rounded-full" />
-        </button>
-        <img
-          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120"
-          alt="Perfil do utilizador"
-          className="w-9 h-9 rounded-full object-cover border border-[#e8e7f1]"
-        />
+  const navigate = useNavigate();
+  const { profile } = useAuth();
+  const { result, loading } = useTestResult(testRepository);
+
+  // Skeleton Loading
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8 animate-pulse p-4">
+        <div className="h-28 bg-surface-container/60 rounded-3xl" />
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <div className="md:col-span-7 h-96 bg-surface-container/60 rounded-3xl" />
+          <div className="md:col-span-5 h-96 bg-surface-container/60 rounded-3xl" />
+        </div>
       </div>
+    );
+  }
 
-      {/* Título & Subtítulo */}
-      <div className="space-y-1">
-        <h1 className="font-heading text-2xl sm:text-3xl font-bold text-[#1a1b22] tracking-tight">
-          Resultados do Teste Vocacional
-        </h1>
-        <p className="font-body text-sm sm:text-base text-[#504536]">
-          Análise detalhada do teu perfil e aptidões cognitivas.
-        </p>
-      </div>
-
-      {/* CARD PRINCIPAL: RECOMENDAÇÃO DE CURSO */}
-      <div className="bg-gradient-to-br from-[#fffdfa] via-white to-[#fbf5e8]/40 rounded-3xl border border-[#d4c4b0]/60 p-6 sm:p-8 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-6 sm:gap-8">
-        
-        <div className="space-y-4 flex-1">
-          <span className="bg-[#fbf5e8] text-[#7e5700] text-[11px] font-bold tracking-wide uppercase px-3.5 py-1 rounded-full border border-[#d4c4b0]/40 inline-block">
-            ★ Recomendação Principal
-          </span>
-
-          <h2 className="font-heading text-2xl sm:text-4xl font-bold text-[#1a1b22] tracking-tight">
-            Engenharia Informática
+  // Ecrã de Teste Não Realizado
+  if (!result || !result.recommendedCourseId) {
+    return (
+      <div className="max-w-xl mx-auto text-center py-20 px-6 space-y-6 bg-surface-container-lowest rounded-3xl border border-outline-variant/40 shadow-sm">
+        <div className="w-16 h-16 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
+          <Compass className="w-8 h-8" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="font-heading text-2xl font-bold text-on-surface">
+            Ainda não descobriste o teu perfil
           </h2>
+          <p className="font-body text-sm text-on-surface-variant max-w-md mx-auto">
+            {profile?.nome ? `${profile.nome}, realiza` : 'Realiza'} o teste de aptidões para identificarmos os cursos do INSTIC que melhor se alinham com os teus objetivos.
+          </p>
+        </div>
+        <button
+          onClick={() => navigate('/candidate/test')}
+          className="bg-primary hover:bg-primary/90 text-on-primary font-bold text-sm px-8 py-3.5 rounded-2xl transition-all shadow-sm cursor-pointer inline-flex items-center gap-2"
+        >
+          <span>Começar Teste Vocacional</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  }
 
-          <p className="font-body text-xs sm:text-sm text-[#504536] leading-relaxed max-w-2xl">
-            O teu perfil indica uma forte aptidão para a resolução de problemas lógicos, pensamento estruturado e inovação tecnológica. Esta área combina a tua capacidade analítica com o desejo de criar sistemas escaláveis.
+  const primaryCourseName = COURSE_LABELS[result.recommendedCourseId as CourseId] ?? 'Curso Recomendado';
+  const runnerUpCourseName = result.runnerUpCourseId ? COURSE_LABELS[result.runnerUpCourseId as CourseId] : null;
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-8 font-body antialiased pb-12">
+      
+      {/* Banner Principal de Destaque */}
+      <div className="relative overflow-hidden bg-linear-to-br from-[#1a1b22] via-[#242530] to-[#1a1b22] text-white p-8 md:p-10 rounded-3xl shadow-md border border-white/10">
+        <div className="relative z-10 space-y-4 max-w-2xl">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/20 border border-primary/30 text-primary-container text-xs font-semibold uppercase tracking-wider">
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <span>Perfil Analisado com Sucesso</span>
+          </div>
+
+          <div>
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest block mb-1">
+              Curso Ideal Recomendado
+            </span>
+            <h1 className="font-heading text-3xl md:text-4xl font-bold text-white tracking-tight">
+              {result.isTie && runnerUpCourseName ? `${primaryCourseName} & ${runnerUpCourseName}` : primaryCourseName}
+            </h1>
+          </div>
+
+          <p className="text-sm text-gray-300 leading-relaxed">
+            {result.isTie 
+              ? 'A tua pontuação demonstra uma forte dupla afinidade técnica. Ambos os cursos oferecem um excelente alinhamento com o teu perfil.'
+              : 'Com base nas tuas respostas e preferências de aptidão, este é o curso com maior afinidade para o teu futuro no INSTIC.'}
           </p>
         </div>
 
-        {/* Gráfico Circular de Afinidade (92%) */}
-        <div className="relative w-36 h-36 sm:w-40 sm:h-40 shrink-0 flex items-center justify-center">
-          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-            <circle
-              cx="50"
-              cy="50"
-              r="40"
-              stroke="#eeedf7"
-              strokeWidth="10"
-              fill="transparent"
-            />
-            <circle
-              cx="50"
-              cy="50"
-              r="40"
-              stroke="#7e5700"
-              strokeWidth="10"
-              strokeDasharray={2 * Math.PI * 40}
-              strokeDashoffset={2 * Math.PI * 40 * (1 - 0.92)}
-              strokeLinecap="round"
-              fill="transparent"
-            />
-          </svg>
-
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="font-heading text-2xl sm:text-3xl font-bold text-[#1a1b22] leading-none">
-              92%
-            </span>
-            <span className="text-[10px] text-[#827564] font-semibold mt-1">
-              Afinidade
-            </span>
-          </div>
-        </div>
-
+        <Award className="absolute -bottom-6 -right-6 w-56 h-56 text-white/5 pointer-events-none" />
       </div>
 
-      {/* GRID DE DETALHAMENTO: PORQUÊ ESTA ÁREA vs OUTRAS ÁREAS */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      {/* Grid de Detalhes e Ações */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
         
-        {/* Lado Esquerdo: Porquê esta área? */}
-        <div className="lg:col-span-8 bg-white rounded-3xl border border-[#e8e7f1] p-6 sm:p-8 shadow-2xs space-y-6">
-          
-          <div className="flex items-center gap-2 text-[#1a1b22] border-b border-[#e8e7f1] pb-4">
-            <Lightbulb className="w-5 h-5 text-[#7e5700]" />
-            <h3 className="font-heading text-base font-bold">
-              Porquê esta área?
-            </h3>
+        {/* Gráfico de Aptidões (7 Cols) */}
+        <div className="md:col-span-7 bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 md:p-8 space-y-6 shadow-xs">
+          <div>
+            <h2 className="font-heading text-lg font-bold text-on-surface">
+              Distribuição de Compatibilidade
+            </h2>
+            <p className="font-body text-xs text-on-surface-variant mt-1">
+              Percentagem de alinhamento com cada área académica.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            
-            {/* Raciocínio Lógico */}
-            <div className="bg-[#f4f2fd]/60 rounded-2xl p-4 space-y-2 border border-[#e8e7f1]">
-              <h4 className="font-heading text-sm font-bold text-[#1a1b22]">
-                Raciocínio Lógico
-              </h4>
-              <p className="font-body text-xs text-[#827564] leading-relaxed">
-                Obtiveste um resultado no percentil 95 em testes de lógica dedutiva e indutiva.
-              </p>
-              <div className="w-full bg-[#eeedf7] h-2 rounded-full overflow-hidden pt-1">
-                <div className="bg-[#7e5700] h-full rounded-full w-[95%]" />
-              </div>
-            </div>
+          <div className="space-y-4">
+            {result.allScores
+              .filter((score) => Boolean(score.courseId))
+              .map((score) => {
+                const courseName = COURSE_LABELS[score.courseId as CourseId] ?? 'Curso';
+                const percentage = Math.round(score.percentage);
+                const isRecommended = score.courseId === result.recommendedCourseId || score.courseId === result.runnerUpCourseId;
 
-            {/* Aptidão Numérica */}
-            <div className="bg-[#f4f2fd]/60 rounded-2xl p-4 space-y-2 border border-[#e8e7f1]">
-              <h4 className="font-heading text-sm font-bold text-[#1a1b22]">
-                Aptidão Numérica
-              </h4>
-              <p className="font-body text-xs text-[#827564] leading-relaxed">
-                Forte capacidade de análise de dados e resolução de problemas matemáticos complexos.
-              </p>
-              <div className="w-full bg-[#eeedf7] h-2 rounded-full overflow-hidden pt-1">
-                <div className="bg-[#7e5700] h-full rounded-full w-[88%]" />
-              </div>
-            </div>
+                return (
+                  <div key={score.courseId} className="space-y-2">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className={`font-semibold ${isRecommended ? 'text-on-surface' : 'text-on-surface-variant'}`}>
+                        {courseName}
+                      </span>
+                      <span className="font-bold text-on-surface">
+                        {percentage}%
+                      </span>
+                    </div>
 
-            {/* Atenção ao Detalhe */}
-            <div className="bg-[#f4f2fd]/60 rounded-2xl p-4 space-y-2 border border-[#e8e7f1]">
-              <h4 className="font-heading text-sm font-bold text-[#1a1b22]">
-                Atenção ao Detalhe
-              </h4>
-              <p className="font-body text-xs text-[#827564] leading-relaxed">
-                Excelente capacidade de identificar padrões e anomalias em sistemas estruturados.
-              </p>
-              <div className="w-full bg-[#eeedf7] h-2 rounded-full overflow-hidden pt-1">
-                <div className="bg-[#7e5700] h-full rounded-full w-[90%]" />
-              </div>
-            </div>
-
-            {/* Trabalho Metódico */}
-            <div className="bg-[#f4f2fd]/60 rounded-2xl p-4 space-y-2 border border-[#e8e7f1]">
-              <h4 className="font-heading text-sm font-bold text-[#1a1b22]">
-                Trabalho Metódico
-              </h4>
-              <p className="font-body text-xs text-[#827564] leading-relaxed">
-                Preferência por abordagens sistemáticas e planeamento a longo prazo.
-              </p>
-              <div className="w-full bg-[#eeedf7] h-2 rounded-full overflow-hidden pt-1">
-                <div className="bg-[#7e5700] h-full rounded-full w-[84%]" />
-              </div>
-            </div>
-
+                    <div className="h-3 bg-surface-container rounded-full overflow-hidden p-0.5 border border-outline-variant/20">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ease-out ${
+                          isRecommended 
+                            ? 'bg-primary' 
+                            : 'bg-outline-variant'
+                        }`}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
           </div>
 
+          <div className="pt-2 flex justify-between items-center text-xs text-on-surface-variant border-t border-outline-variant/30">
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-primary" />
+              Resultado gravado na conta
+            </span>
+            <button
+              onClick={() => navigate('/candidate/test')}
+              className="text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Refazer Teste
+            </button>
+          </div>
         </div>
 
-        {/* Lado Direito: Outras Áreas */}
-        <div className="lg:col-span-4 bg-white rounded-3xl border border-[#e8e7f1] p-6 shadow-2xs space-y-6">
+        {/* Próximos Passos (5 Cols) */}
+        <div className="md:col-span-5 space-y-4">
           
-          <div className="flex items-center gap-2 text-[#1a1b22] border-b border-[#e8e7f1] pb-4">
-            <Compass className="w-5 h-5 text-[#7e5700]" />
-            <h3 className="font-heading text-base font-bold">
-              Outras Áreas
+          <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 space-y-4 shadow-xs">
+            <h3 className="font-heading font-bold text-base text-on-surface">
+              Ações Recomendadas
             </h3>
-          </div>
 
-          <div className="space-y-5 divide-y divide-[#e8e7f1]/60">
-            {OTHER_AREAS.map((area, idx) => (
-              <div key={area.title} className={`flex items-center justify-between ${idx > 0 ? 'pt-4' : ''}`}>
-                <div className="space-y-0.5">
-                  <h4 className="font-heading text-sm font-bold text-[#1a1b22]">
-                    {area.title}
-                  </h4>
-                  <p className="text-[11px] text-[#827564]">
-                    {area.label}
-                  </p>
-                </div>
-                <span className="font-heading text-base font-bold text-[#7e5700]">
-                  {area.percentage}%
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate(`/course/${result.recommendedCourseId}`)}
+                className="w-full bg-primary hover:bg-primary/90 text-on-primary font-semibold text-xs py-3.5 px-4 rounded-2xl transition-all shadow-xs cursor-pointer flex items-center justify-between"
+              >
+                <span className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4" />
+                  Ver Plano do Curso
                 </span>
-              </div>
-            ))}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => navigate('/candidate/chat')}
+                className="w-full bg-surface-container-low hover:bg-surface-container border border-outline-variant/40 text-on-surface font-semibold text-xs py-3.5 px-4 rounded-2xl transition-all cursor-pointer flex items-center justify-between"
+              >
+                <span className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-primary" />
+                  Tirar Dúvidas com Orientador
+                </span>
+                <ArrowRight className="w-4 h-4 text-on-surface-variant" />
+              </button>
+            </div>
           </div>
 
-        </div>
+          <div className="p-5 rounded-3xl bg-primary/5 border border-primary/15 space-y-2">
+            <h4 className="font-heading font-bold text-xs text-primary uppercase tracking-wider">
+              Próxima Etapa: Inscrição
+            </h4>
+            <p className="font-body text-xs text-on-surface-variant leading-relaxed">
+              Com o teu relatório pronto, podes dirigir-te à secretaria ou continuar o processo de pré-matrícula online.
+            </p>
+          </div>
 
-      </div>
-
-      {/* BANNER INSCREVE-TE NO INSTIC */}
-      <div className="bg-[#f4f2fd]/70 rounded-3xl p-8 sm:p-12 border border-[#e8e7f1] text-center space-y-6 shadow-2xs">
-        
-        <div className="w-14 h-14 rounded-full bg-[#fbf5e8] text-[#7e5700] flex items-center justify-center mx-auto border border-[#d4c4b0]/40">
-          <GraduationCap className="w-7 h-7 stroke-[1.8]" />
-        </div>
-
-        <div className="space-y-2 max-w-xl mx-auto">
-          <h3 className="font-heading text-xl sm:text-2xl font-bold text-[#1a1b22]">
-            Desbloqueia o Teu Potencial Completo
-          </h3>
-          <p className="font-body text-xs sm:text-sm text-[#504536] leading-relaxed">
-            Obtém acesso ao relatório detalhado de 30 páginas, aconselhamento personalizado 1-para-1 com especialistas e acesso a programas exclusivos de mentoria.
-          </p>
-        </div>
-
-        <div className="pt-2">
-          <button
-            type="button"
-            className="bg-[#7e5700] hover:bg-[#604100] active:scale-[0.99] text-white text-xs sm:text-sm font-semibold px-8 py-4 rounded-xl shadow-xs transition-all inline-flex items-center gap-2"
-          >
-            <span>Inscreve-te no INSTIC</span>
-            <ArrowRight size={16} />
-          </button>
         </div>
 
       </div>

@@ -3,16 +3,17 @@ import type { TestRepository, SaveTestResultInput } from '../../domain/test/Test
 
 export class SupabaseTestRepository implements TestRepository {
   async saveResult(input: SaveTestResultInput): Promise<void> {
-    const { error } = await supabase.from('test_results').insert({
-      user_id: input.userId,
-      recommended_course_id: input.recommendedCourseId,
-      is_tie: input.isTie,
-      runner_up_course_id: input.runnerUpCourseId,
-      all_scores: input.allScores,
-    });
-
-    if (error) throw error;
-  }
+  const { error } = await supabase.from('test_results').insert({
+    user_id: input.userId,
+    recommended_course_id: input.recommendedCourseId ?? null,
+    recommended_area_id: input.recommendedAreaId ?? null,
+    is_tie: input.isTie,
+    runner_up_course_id: input.runnerUpCourseId ?? null,
+    runner_up_area_id: input.runnerUpAreaId ?? null,
+    all_scores: input.allScores,
+  });
+  if (error) throw error;
+}
 
   async getResultHistory(userId: string): Promise<SaveTestResultInput[]> {
     const { data, error } = await supabase

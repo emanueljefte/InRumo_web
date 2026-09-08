@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react';
-import { Camera, Pencil } from 'lucide-react';
+import { useState } from 'react';
+import { Camera, Pencil, CheckCircle2, AlertCircle, Loader2, User, Mail, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../application/auth/useAuth';
 import { SupabaseProfileRepository } from '../../data/supabase/SupabaseProfileRepository';
 
+const profileRepository = new SupabaseProfileRepository();
+
 export default function CandidateProfilePage() {
   const { session, profile } = useAuth();
-  const profileRepository = useMemo(() => new SupabaseProfileRepository(), []);
 
   const [nome, setNome] = useState(profile?.nome ?? '');
   const [editing, setEditing] = useState(false);
@@ -13,94 +14,188 @@ export default function CandidateProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // const displayedNome = nome || profile?.nome || '';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session) return;
+
     setError(null);
     setSaved(false);
     setLoading(true);
+
     try {
       await profileRepository.updateProfile(session.user.id, { nome });
       setSaved(true);
       setEditing(false);
+      setTimeout(() => setSaved(false), 4000);
     } catch {
-      setError('Não foi possível guardar as alterações.');
+      setError('Não foi possível guardar as alterações. Tenta novamente.');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleCancel = () => {
+    setEditing(false);
+    setNome(profile?.nome ?? '');
+    setError(null);
+  };
+
   return (
-    <div className="max-w-lg mx-auto space-y-8 font-body text-on-background antialiased">
-      <div className="space-y-1">
-        <h1 className="font-heading text-headline-lg text-on-surface">Configurações de Perfil</h1>
-        <p className="font-body-sm text-on-surface-variant">Gerencia as tuas informações pessoais.</p>
+    <div className="max-w-2xl mx-auto space-y-8 font-body text-on-background antialiased pb-12">
+      
+      {/* Cabeçalho */}
+      <div className="border-b border-outline-variant/40 pb-5 space-y-1">
+        <h1 className="font-heading text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">
+          Configurações de Perfil
+        </h1>
+        <p className="font-body text-xs sm:text-sm text-on-surface-variant">
+          Gere os teus dados pessoais e credenciais de acesso ao InRumo.
+        </p>
       </div>
 
-      {/* Card: Avatar */}
-      <div className="bg-surface-container-lowest rounded-3xl border border-outline-variant/60 p-6 text-center space-y-4">
-        <div className="relative w-24 h-24 mx-auto">
-          <div className="w-full h-full rounded-full bg-primary-container/60 flex items-center justify-center text-on-primary-container font-heading text-2xl font-bold">
-            {nome.charAt(0).toUpperCase() || '?'}
+      {/* Card de Identificação de Perfil */}
+      <div className="bg-surface-container-lowest rounded-3xl border border-outline-variant/40 p-6 sm:p-8 shadow-xs flex flex-col sm:flex-row items-center gap-6">
+        
+        {/* Avatar com Badge de Edição */}
+        <div className="relative group shrink-0">
+          <div className="w-24 h-24 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-heading text-3xl font-bold uppercase shadow-inner">
+            {nome.charAt(0) || <User className="w-10 h-10" />}
           </div>
+
           <button
             type="button"
             title="Alterar fotografia — em breve"
             disabled
-            className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full shadow-xs opacity-50 cursor-not-allowed"
+            className="absolute bottom-0 right-0 p-2.5 bg-surface-container-high text-on-surface-variant border border-outline-variant/60 rounded-full shadow-xs cursor-not-allowed opacity-80"
           >
             <Camera size={14} />
           </button>
         </div>
-        <h2 className="font-heading text-lg font-bold text-on-surface">{nome || 'Sem nome'}</h2>
+
+        {/* Info Rápida */}
+        <div className="text-center sm:text-left space-y-1 flex-1 min-w-0">
+          <div className="flex items-center justify-center sm:justify-start gap-2">
+            <h2 className="font-heading text-xl font-bold text-on-surface truncate">
+              {nome || 'Candidato'}
+            </h2>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 text-[11px] font-semibold">
+              <ShieldCheck size={12} /> Ativo
+            </span>
+          </div>
+          <p className="font-body text-xs text-on-surface-variant truncate">
+            {session?.user.email ?? 'Email não informado'}
+          </p>
+        </div>
       </div>
 
-      {/* Card: Informações Pessoais */}
-      <div className="bg-surface-container-lowest rounded-3xl border border-outline-variant/60 p-6 sm:p-8 space-y-5">
-        <div className="flex items-center justify-between">
-          <h3 className="font-heading text-body-lg font-bold text-on-surface">Informações Pessoais</h3>
+      {/* Card: Formulário de Informações Pessoais */}
+      <div className="bg-surface-container-lowest rounded-3xl border border-outline-variant/40 p-6 sm:p-8 space-y-6 shadow-xs">
+        
+        <div className="flex items-center justify-between border-b border-outline-variant/30 pb-4">
+          <h3 className="font-heading text-base sm:text-lg font-bold text-on-surface">
+            Informações Pessoais
+          </h3>
+          
           {!editing && (
-            <button type="button" onClick={() => setEditing(true)} className="flex items-center gap-1.5 text-xs font-bold text-primary hover:underline">
-              <Pencil size={14} /> Editar
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:bg-primary/5 px-3 py-1.5 rounded-xl transition-all cursor-pointer border border-primary/20"
+            >
+              <Pencil size={13} />
+              <span>Editar</span>
             </button>
           )}
         </div>
 
-        {error && <p className="font-body-sm text-error">{error}</p>}
-        {saved && <p className="font-body-sm text-primary">Alterações guardadas.</p>}
+        {/* Alertas de Estado */}
+        {error && (
+          <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-error/10 border border-error/20 text-error text-xs font-semibold">
+            <AlertCircle size={16} className="shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1">
-            <label className="font-body-sm text-on-surface-variant">Nome</label>
-            <input
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              disabled={!editing}
-              required
-              className="w-full border border-outline-variant rounded-lg px-3 py-2.5 font-body-sm disabled:bg-surface-container disabled:text-on-surface-variant"
-            />
+        {saved && (
+          <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-xs font-semibold">
+            <CheckCircle2 size={16} className="shrink-0 text-emerald-600" />
+            <span>Alterações guardadas com sucesso!</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          
+          {/* Campo: Nome Completo */}
+          <div className="space-y-2">
+            <label className="block font-body text-xs font-semibold text-on-surface">
+              Nome Completo
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                disabled={!editing || loading}
+                required
+                placeholder="Introduz o teu nome completo"
+                className={`w-full border rounded-2xl px-4 py-3 text-sm font-body text-on-surface transition-all focus:outline-none ${
+                  editing
+                    ? 'border-primary/50 bg-surface-container-lowest focus:ring-2 focus:ring-primary/30 shadow-xs'
+                    : 'border-outline-variant/40 bg-surface-container-low/50 text-on-surface-variant cursor-not-allowed'
+                }`}
+              />
+            </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="font-body-sm text-on-surface-variant">Email</label>
-            <input value={session?.user.email ?? ''} disabled
-              className="w-full border border-outline-variant rounded-lg px-3 py-2.5 font-body-sm bg-surface-container text-on-surface-variant" />
+          {/* Campo: Email (Somente Leitura) */}
+          <div className="space-y-2">
+            <label className="block font-body text-xs font-semibold text-on-surface">
+              Endereço de Email
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-on-surface-variant/60">
+                <Mail size={16} />
+              </div>
+              <input
+                type="email"
+                value={session?.user.email ?? ''}
+                disabled
+                className="w-full border border-outline-variant/40 rounded-2xl pl-10 pr-4 py-3 text-sm font-body bg-surface-container-low/50 text-on-surface-variant/80 cursor-not-allowed"
+              />
+            </div>
+            <p className="text-[11px] text-on-surface-variant/70 pl-1">
+              O email está associado à tua conta e não pode ser alterado diretamente.
+            </p>
           </div>
 
+          {/* Ações de Edição */}
           {editing && (
-            <div className="flex gap-3 justify-end pt-2">
-              <button type="button" onClick={() => { setEditing(false); setNome(profile?.nome ?? ''); }}
-                className="px-5 py-2.5 rounded-xl border border-outline-variant text-xs font-semibold text-on-surface-variant">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-outline-variant/30">
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={loading}
+                className="px-5 py-2.5 rounded-xl border border-outline-variant/60 text-xs font-bold text-on-surface-variant hover:bg-surface-container-low transition-all cursor-pointer disabled:opacity-50"
+              >
                 Cancelar
               </button>
-              <button type="submit" disabled={loading}
-                className="px-5 py-2.5 rounded-xl bg-primary-container text-on-primary-container text-xs font-semibold disabled:opacity-50">
-                {loading ? 'A guardar...' : 'Guardar'}
+              
+              <button
+                type="submit"
+                disabled={loading || !nome.trim()}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-on-primary text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                {loading && <Loader2 size={14} className="animate-spin" />}
+                <span>{loading ? 'A guardar...' : 'Guardar Alterações'}</span>
               </button>
             </div>
           )}
+
         </form>
       </div>
+
     </div>
   );
 }

@@ -13,15 +13,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function loadProfile(userId: string) {
     const { data } = await supabase
       .from('profiles')
-      .select('id, nome, situacao, verification_status')
+      .select('id, nome, situacao, papel, curso_id, numero_processo, telefone, turno, ano_academico, verification_status')
       .eq('id', userId)
       .single();
+
     setProfile(
-      data
-        ? { id: data.id, nome: data.nome, situacao: data.situacao, verificationStatus: data.verification_status }
-        : null
+      data ? {
+        id: data.id, nome: data.nome, situacao: data.situacao, papel: data.papel,
+        cursoId: data.curso_id, numeroProcesso: data.numero_processo,
+        telefone: data.telefone, turno: data.turno, anoAcademico: data.ano_academico,
+        verificationStatus: data.verification_status,
+      } : null
     );
   }
+
+  // AuthProvider.tsx — adicionar subscrição Realtime ao profile do próprio utilizador
+  useEffect(() => {
+    if (!session) return;
+
+    const channel = supabase
+      .channel(`profile-changes:${session.user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${session.user.id}` },
+        (payload) => {
+          setProfile((prev) => prev ? {
+            ...prev,
+            situacao: payload.new.situacao,
+            verificationStatus: payload.new.verification_status,
+            cursoId: payload.new.curso_id,
+          } : prev);
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [session]);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {

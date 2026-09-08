@@ -2,16 +2,16 @@ import { supabase } from '../../api/supabase';
 import type { AuthRepository, SignUpInput, SignInInput } from '../../domain/auth/AuthRepository';
 
 export class SupabaseAuthRepository implements AuthRepository {
-  async signUp({ nome, email, senha }: SignUpInput) {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password: senha,
-      options: { data: { nome } }, // lido pelo trigger handle_new_user
-    });
-    if (error) throw error;
-    if (!data.user) throw new Error('Falha ao criar utilizador.');
-    return { userId: data.user.id };
-  }
+  async signUp({ nome, email, senha, intent }: SignUpInput & { intent: 'candidate' | 'matriculado' }) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password: senha,
+    options: { data: { nome, registration_intent: intent } }, // lido pelo trigger
+  });
+  if (error) throw error;
+  if (!data.user) throw new Error('Falha ao criar utilizador.');
+  return { userId: data.user.id };
+}
 
   async signIn({ email, senha }: SignInInput) {
     const { error } = await supabase.auth.signInWithPassword({ email, password: senha });

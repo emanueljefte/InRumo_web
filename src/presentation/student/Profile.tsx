@@ -1,357 +1,249 @@
-import React, { useState } from 'react';
-import { 
-  Bell, 
-  Search, 
-  Camera, 
-  Pencil, 
-  ChevronRight, 
-  Lock, 
-  ShieldCheck, 
-  GraduationCap, 
-  User, 
-  Settings 
-} from 'lucide-react';
+// presentation/student/StudentProfilePage.tsx
+import { useMemo, useState, useId } from 'react';
+import { Camera, Pencil, GraduationCap, User, AlertCircle, CheckCircle2, Loader2, Mail, Info } from 'lucide-react';
+import { useAuth } from '../../application/auth/useAuth';
+import { SupabaseProfileRepository } from '../../data/supabase/SupabaseProfileRepository';
+import { COURSE_LABELS } from '../../domain/course/courseLabels';
 
-export default function ProfilePage() {
-  const [formData, setFormData] = useState({
-    fullName: 'Emanuel Jefté',
-    email: 'emanueljefte@instic.edu.ao',
-    phone: '+244 923 000 000',
-    birthDate: '2002-04-12',
-    studentCode: '20240192',
-    institution: 'INSTIC - Instituto Superior de Tecnologias',
-    course: 'Engenharia Informática',
-    academicYear: '3.º Ano',
-    shift: 'Manhã',
-    gpa: '8.5',
-  });
+export default function StudentProfilePage() {
+  const { session, profile } = useAuth();
+  const profileRepository = useMemo(() => new SupabaseProfileRepository(), []);
+
+  const [nome, setNome] = useState(profile?.nome ?? '');
+  const [editing, setEditing] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const nameInputId = useId();
+  const emailInputId = useId();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!session || !nome.trim()) return;
+
+    setError(null);
+    setSaved(false);
+    setLoading(true);
+
+    try {
+      await profileRepository.updateProfile(session.user.id, { nome: nome.trim() });
+      setSaved(true);
+      setEditing(false);
+      setTimeout(() => setSaved(false), 4000);
+    } catch {
+      setError('Não foi possível guardar as alterações. Tenta novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setEditing(false);
+    setNome(profile?.nome ?? '');
+    setError(null);
+  };
+
+  const initialLetter = nome.trim().charAt(0).toUpperCase();
 
   return (
-    <div className="max-w-[1100px] mx-auto space-y-8 font-sans text-[#1a1b22] antialiased">
+    <div className="max-w-2xl mx-auto space-y-8 font-body text-on-background antialiased pb-12">
       
-      {/* Barra de Pesquisa Superior & Notificação */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#827564]" />
-          <input
-            type="text"
-            placeholder="Buscar configurações..."
-            className="w-full bg-white border border-[#e8e7f1] text-xs text-[#1a1b22] placeholder:text-[#827564]/70 pl-11 pr-4 py-3 rounded-full focus:outline-none focus:border-[#7e5700] transition-colors"
-          />
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button 
-            type="button"
-            className="p-2.5 text-[#504536] hover:text-[#1a1b22] hover:bg-[#eeedf7] rounded-full transition-colors relative"
-          >
-            <Bell size={18} />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-[#c9932e] rounded-full" />
-          </button>
-          <img
-            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120"
-            alt="Avatar Emanuel Jefté"
-            className="w-9 h-9 rounded-full object-cover border border-[#e8e7f1]"
-          />
-        </div>
-      </div>
-
-      {/* Título & Subtítulo */}
-      <div className="space-y-1">
-        <h1 className="font-heading text-2xl sm:text-3xl font-bold text-[#1a1b22] tracking-tight">
+      {/* Cabeçalho */}
+      <header className="border-b border-outline-variant/40 pb-5 space-y-1">
+        <h1 className="font-heading text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">
           Configurações de Perfil
         </h1>
-        <p className="font-body text-sm sm:text-base text-[#504536]">
-          Gerencie suas informações pessoais e académicas do instituto.
+        <p className="font-body text-xs sm:text-sm text-on-surface-variant">
+          Gere as tuas informações pessoais e académicas.
         </p>
-      </div>
+      </header>
 
-      {/* Grid Principal do Perfil */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      {/* Card de Identificação de Perfil & Avatar */}
+      <section className="bg-surface-container-lowest rounded-3xl border border-outline-variant/40 p-6 sm:p-8 shadow-xs flex flex-col sm:flex-row items-center gap-6">
         
-        {/* COLUNA DA ESQUERDA: Avatar & Conta */}
-        <div className="lg:col-span-4 space-y-6">
+        {/* Avatar */}
+        <div className="relative group shrink-0">
+          <div className="w-24 h-24 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-heading text-3xl font-bold uppercase shadow-inner">
+            {initialLetter || <User className="w-10 h-10 text-primary/70" />}
+          </div>
+
+          <button
+            type="button"
+            aria-label="Alterar fotografia (recurso em breve)"
+            disabled
+            className="absolute bottom-0 right-0 p-2.5 bg-surface-container-high text-on-surface-variant/50 border border-outline-variant/60 rounded-full shadow-xs cursor-not-allowed opacity-80"
+          >
+            <Camera size={14} />
+          </button>
+        </div>
+
+        {/* Informação Rápida */}
+        <div className="text-center sm:text-left space-y-1 flex-1 min-w-0">
+          <h2 className="font-heading text-xl font-bold text-on-surface truncate">
+            {nome.trim() || 'Sem nome'}
+          </h2>
+          {profile?.cursoId && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+              <GraduationCap size={14} className="shrink-0" />
+              <span className="truncate">Estudante de {COURSE_LABELS[profile.cursoId]}</span>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Card: Informações Pessoais */}
+      <section className="bg-surface-container-lowest rounded-3xl border border-outline-variant/40 p-6 sm:p-8 space-y-6 shadow-xs">
+        
+        <div className="flex items-center justify-between border-b border-outline-variant/30 pb-4">
+          <div className="flex items-center gap-2 text-on-surface">
+            <User className="w-5 h-5 text-primary" />
+            <h3 className="font-heading text-base sm:text-lg font-bold">Informações Pessoais</h3>
+          </div>
+
+          {!editing && (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:bg-primary/10 px-3 py-1.5 rounded-xl transition-all cursor-pointer border border-primary/20 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
+            >
+              <Pencil size={13} />
+              <span>Editar</span>
+            </button>
+          )}
+        </div>
+
+        {/* Alertas Acessíveis */}
+        {error && (
+          <div 
+            role="alert" 
+            aria-live="assertive"
+            className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-error/10 border border-error/20 text-error text-xs font-semibold animate-in fade-in"
+          >
+            <AlertCircle size={16} className="shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {saved && (
+          <div 
+            role="status" 
+            aria-live="polite"
+            className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-xs font-semibold animate-in fade-in"
+          >
+            <CheckCircle2 size={16} className="shrink-0 text-emerald-600" />
+            <span>Alterações guardadas com sucesso!</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
           
-          {/* Card Avatar & Bio */}
-          <div className="bg-white rounded-3xl border border-[#e8e7f1] p-6 text-center space-y-4 shadow-2xs">
-            <div className="relative w-28 h-28 mx-auto">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300"
-                alt="Emanuel Jefté"
-                className="w-full h-full rounded-full object-cover border-2 border-[#e8e7f1]"
+          {/* Nome */}
+          <div className="space-y-2">
+            <label 
+              htmlFor={nameInputId}
+              className="block font-body text-xs font-semibold text-on-surface"
+            >
+              Nome
+            </label>
+            <input
+              id={nameInputId}
+              type="text"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              disabled={!editing || loading}
+              required
+              placeholder="Introduz o teu nome"
+              className={`w-full border rounded-2xl px-4 py-3 text-sm font-body text-on-surface transition-all focus:outline-none ${
+                editing
+                  ? 'border-primary/50 bg-surface-container-lowest focus:ring-2 focus:ring-primary/30 shadow-xs'
+                  : 'border-outline-variant/40 bg-surface-container-low/50 text-on-surface-variant cursor-not-allowed'
+              }`}
+            />
+          </div>
+
+          {/* Email */}
+          <div className="space-y-2">
+            <label 
+              htmlFor={emailInputId}
+              className="block font-body text-xs font-semibold text-on-surface"
+            >
+              Email
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-on-surface-variant/60">
+                <Mail size={16} />
+              </div>
+              <input
+                id={emailInputId}
+                type="email"
+                value={session?.user.email ?? ''}
+                disabled
+                className="w-full border border-outline-variant/40 rounded-2xl pl-10 pr-4 py-3 text-sm font-body bg-surface-container-low/50 text-on-surface-variant/80 cursor-not-allowed"
               />
-              <button 
-                type="button"
-                className="absolute bottom-0 right-0 p-2 bg-[#7e5700] hover:bg-[#604100] text-white rounded-full shadow-xs transition-colors"
-                title="Alterar fotografia"
-              >
-                <Camera size={14} />
-              </button>
-            </div>
-
-            <div className="space-y-1">
-              <h2 className="font-heading text-lg font-bold text-[#1a1b22]">
-                {formData.fullName}
-              </h2>
-              <p className="font-body text-xs text-[#827564]">
-                Estudante do {formData.academicYear} • INSTIC
-              </p>
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-2 pt-2">
-              <span className="bg-[#fbf5e8] text-[#7e5700] text-[11px] font-semibold px-3 py-1 rounded-full border border-[#d4c4b0]/40">
-                Engenharia
-              </span>
-              <span className="bg-[#fbf5e8] text-[#7e5700] text-[11px] font-semibold px-3 py-1 rounded-full border border-[#d4c4b0]/40">
-                Tecnologia
-              </span>
             </div>
           </div>
 
-          {/* Card Configurações de Conta */}
-          <div className="bg-white rounded-3xl border border-[#e8e7f1] p-6 space-y-4 shadow-2xs">
-            <div className="flex items-center gap-2 text-[#1a1b22]">
-              <Settings className="w-4 h-4 text-[#7e5700]" />
-              <h3 className="font-heading text-sm font-bold">Conta</h3>
-            </div>
-
-            <div className="space-y-1 divide-y divide-[#e8e7f1]/60">
+          {/* Botões de Ação */}
+          {editing && (
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-outline-variant/30 animate-in fade-in">
               <button
                 type="button"
-                className="w-full flex items-center justify-between py-3 text-xs font-medium text-[#504536] hover:text-[#1a1b22] transition-colors"
+                onClick={handleCancel}
+                disabled={loading}
+                className="px-5 py-2.5 rounded-xl border border-outline-variant/60 text-xs font-bold text-on-surface-variant hover:bg-surface-container-low transition-all cursor-pointer disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
               >
-                <span>Alterar Senha</span>
-                <ChevronRight size={16} className="text-[#827564]" />
+                Cancelar
               </button>
-
-              <button
-                type="button"
-                className="w-full flex items-center justify-between py-3 text-xs font-medium text-[#504536] hover:text-[#1a1b22] transition-colors"
-              >
-                <span>Preferências de Notificação</span>
-                <ChevronRight size={16} className="text-[#827564]" />
-              </button>
-
-              <button
-                type="button"
-                className="w-full flex items-center justify-between py-3 text-xs font-medium text-[#504536] hover:text-[#1a1b22] transition-colors"
-              >
-                <span>Privacidade dos Dados</span>
-                <ChevronRight size={16} className="text-[#827564]" />
-              </button>
-            </div>
-          </div>
-
-        </div>
-
-        {/* COLUNA DA DIREITA: Informações Pessoais & Histórico Académico */}
-        <div className="lg:col-span-8 space-y-6">
-          
-          {/* Informações Pessoais */}
-          <div className="bg-white rounded-3xl border border-[#e8e7f1] p-6 sm:p-8 space-y-6 shadow-2xs">
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[#1a1b22]">
-                <User className="w-5 h-5 text-[#7e5700]" />
-                <h3 className="font-heading text-base font-bold">
-                  Informações Pessoais
-                </h3>
-              </div>
-              <button
-                type="button"
-                className="flex items-center gap-1.5 text-xs font-bold text-[#7e5700] hover:underline"
-              >
-                <Pencil size={14} />
-                Editar
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-[#827564]">
-                  Nome Completo
-                </label>
-                <input
-                  type="text"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="w-full bg-[#f4f2fd]/60 text-xs font-medium text-[#1a1b22] px-4 py-3 rounded-xl border border-transparent focus:bg-white focus:border-[#7e5700] focus:outline-none transition-all"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-[#827564]">
-                  Email Institucional
-                </label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full bg-[#f4f2fd]/60 text-xs font-medium text-[#1a1b22] px-4 py-3 rounded-xl border border-transparent focus:bg-white focus:border-[#7e5700] focus:outline-none transition-all"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-[#827564]">
-                  Telefone
-                </label>
-                <input
-                  type="text"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full bg-[#f4f2fd]/60 text-xs font-medium text-[#1a1b22] px-4 py-3 rounded-xl border border-transparent focus:bg-white focus:border-[#7e5700] focus:outline-none transition-all"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-[#827564]">
-                  Data de Nascimento
-                </label>
-                <input
-                  type="date"
-                  value={formData.birthDate}
-                  onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                  className="w-full bg-[#f4f2fd]/60 text-xs font-medium text-[#1a1b22] px-4 py-3 rounded-xl border border-transparent focus:bg-white focus:border-[#7e5700] focus:outline-none transition-all"
-                />
-              </div>
-            </div>
-
-          </div>
-
-          {/* Histórico Académico (INSTIC) */}
-          <div className="bg-white rounded-3xl border border-[#e8e7f1] p-6 sm:p-8 space-y-6 shadow-2xs">
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[#1a1b22]">
-                <GraduationCap className="w-5 h-5 text-[#7e5700]" />
-                <h3 className="font-heading text-base font-bold">
-                  Histórico Académico
-                </h3>
-              </div>
-              <button
-                type="button"
-                className="flex items-center gap-1.5 text-xs font-bold text-[#7e5700] hover:underline"
-              >
-                <Pencil size={14} />
-                Atualizar
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               
-              <div className="space-y-1.5 sm:col-span-2">
-                <label className="block text-xs font-medium text-[#827564]">
-                  Instituição Atual
-                </label>
-                <input
-                  type="text"
-                  readOnly
-                  value={formData.institution}
-                  className="w-full bg-[#f4f2fd]/60 text-xs font-semibold text-[#1a1b22] px-4 py-3 rounded-xl border border-transparent cursor-not-allowed"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-[#827564]">
-                  Código / Nº de Estudante
-                </label>
-                <input
-                  type="text"
-                  readOnly
-                  value={formData.studentCode}
-                  className="w-full bg-[#f4f2fd]/60 font-mono text-xs font-bold text-[#7e5700] px-4 py-3 rounded-xl border border-transparent cursor-not-allowed"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-[#827564]">
-                  Curso
-                </label>
-                <input
-                  type="text"
-                  value={formData.course}
-                  onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                  className="w-full bg-[#f4f2fd]/60 text-xs font-medium text-[#1a1b22] px-4 py-3 rounded-xl border border-transparent focus:bg-white focus:border-[#7e5700] focus:outline-none transition-all"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-[#827564]">
-                  Ano Académico
-                </label>
-                <select
-                  value={formData.academicYear}
-                  onChange={(e) => setFormData({ ...formData, academicYear: e.target.value })}
-                  className="w-full bg-[#f4f2fd]/60 text-xs font-medium text-[#1a1b22] px-4 py-3 rounded-xl border border-transparent focus:bg-white focus:border-[#7e5700] focus:outline-none transition-all"
-                >
-                  <option value="1.º Ano">1.º Ano</option>
-                  <option value="2.º Ano">2.º Ano</option>
-                  <option value="3.º Ano">3.º Ano</option>
-                  <option value="4.º Ano">4.º Ano</option>
-                  <option value="5.º Ano">5.º Ano</option>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-[#827564]">
-                  Turno
-                </label>
-                <select
-                  value={formData.shift}
-                  onChange={(e) => setFormData({ ...formData, shift: e.target.value })}
-                  className="w-full bg-[#f4f2fd]/60 text-xs font-medium text-[#1a1b22] px-4 py-3 rounded-xl border border-transparent focus:bg-white focus:border-[#7e5700] focus:outline-none transition-all"
-                >
-                  <option value="Manhã">Manhã</option>
-                  <option value="Tarde">Tarde</option>
-                  <option value="Pós-Laboral">Pós-Laboral</option>
-                </select>
-              </div>
-
+              <button
+                type="submit"
+                disabled={loading || !nome.trim()}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-on-primary text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
+              >
+                {loading && <Loader2 size={14} className="animate-spin" />}
+                <span>{loading ? 'A guardar...' : 'Guardar'}</span>
+              </button>
             </div>
+          )}
 
-            {/* Desempenho Geral / Média Global */}
-            <div className="pt-4 border-t border-[#e8e7f1]/60 space-y-2">
-              <div className="flex justify-between items-center text-xs">
-                <span className="font-medium text-[#827564]">Desempenho Geral (Média)</span>
-                <span className="font-heading font-bold text-[#1a1b22]">
-                  <strong className="text-sm text-[#7e5700]">{formData.gpa}</strong> / 10
-                </span>
-              </div>
+        </form>
+      </section>
 
-              <div className="w-full bg-[#f4f2fd] h-2.5 rounded-full overflow-hidden">
-                <div 
-                  className="bg-[#7e5700] h-full rounded-full transition-all duration-500" 
-                  style={{ width: `${(parseFloat(formData.gpa) / 10) * 100}%` }}
-                />
-              </div>
-
-              <p className="text-[11px] text-[#827564] text-right">
-                Bom aproveitamento em disciplinas de Desenvolvimento de Software.
-              </p>
-            </div>
-
-          </div>
-
-          {/* Botões de Ação (Descartar / Salvar) */}
-          <div className="flex justify-end items-center gap-3 pt-2">
-            <button
-              type="button"
-              className="px-6 py-3 rounded-xl border border-[#d4c4b0] text-xs font-semibold text-[#504536] hover:bg-[#f4f2fd] transition-colors"
-            >
-              Descartar
-            </button>
-
-            <button
-              type="button"
-              className="px-6 py-3 rounded-xl bg-[#7e5700] hover:bg-[#604100] active:scale-[0.99] text-white text-xs font-semibold shadow-xs transition-all"
-            >
-              Salvar Alterações
-            </button>
-          </div>
-
+      {/* Card: Informação Académica (Somente Leitura) */}
+      <section className="bg-surface-container-lowest rounded-3xl border border-outline-variant/40 p-6 sm:p-8 space-y-6 shadow-xs">
+        <div className="flex items-center gap-2 text-on-surface border-b border-outline-variant/30 pb-4">
+          <GraduationCap className="w-5 h-5 text-primary" />
+          <h3 className="font-heading text-base sm:text-lg font-bold">Informação Académica</h3>
         </div>
 
-      </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-on-surface">Curso</label>
+            <input
+              readOnly
+              value={profile?.cursoId ? COURSE_LABELS[profile.cursoId] : '—'}
+              className="w-full bg-surface-container-low/50 text-xs font-semibold text-on-surface-variant px-4 py-3 rounded-2xl border border-outline-variant/40 cursor-not-allowed"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-on-surface">Número de Processo</label>
+            <input
+              readOnly
+              value={profile?.numeroProcesso ?? '—'}
+              className="w-full bg-surface-container-low/50 font-mono text-xs font-bold text-primary px-4 py-3 rounded-2xl border border-outline-variant/40 cursor-not-allowed"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-surface-container-low/60 border border-outline-variant/30 text-on-surface-variant text-xs">
+          <Info size={16} className="shrink-0 text-primary mt-0.5" />
+          <p className="leading-relaxed">
+            Estes dados foram validados pela Administração Académica no momento da matrícula. Se algo estiver incorreto, contacta a Administração Académica.
+          </p>
+        </div>
+      </section>
 
     </div>
   );

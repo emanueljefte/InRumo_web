@@ -4,7 +4,6 @@ import type { EnrollmentDocumentRepository } from "../../domain/auth/EnrollmentD
 import type { CourseId } from "../../domain/test/TestQuestion";
 import { normalizeName } from "./normalizeName";
 
-// application/auth/registerMatriculado.ts — envolvido em try/catch, com falha recuperável
 export type RegisterMatriculadoResult =
   | { status: 'verified' }
   | { status: 'pending' }
@@ -17,7 +16,7 @@ export async function registerMatriculado(
   admissionRepo: AdmissionVerificationRepository,
   documentRepo: EnrollmentDocumentRepository,
 ): Promise<RegisterMatriculadoResult> {
-  const { userId } = await authRepository.signUp({ nome: input.nome, email: input.email, senha: input.senha });
+  const { userId } = await authRepository.signUp({ nome: input.nome, email: input.email, senha: input.senha, intent: 'matriculado' });
   // se signUp falhar, o erro propaga normalmente — nada foi criado, sem estado a limpar
 
   try {
@@ -38,14 +37,17 @@ export async function completeMatriculadoVerification(
   const verification = await admissionRepo.verify(input.numeroProcesso);
 
   if (verification.matched && normalizeName(verification.nome) === normalizeName(input.nome)) {
-    await documentRepo.updateProfileVerification(userId, {
-      situacao: 'matriculado',
-      cursoId: verification.cursoId,
-      numeroProcesso: input.numeroProcesso,
-      verificationStatus: 'verified',
-    });
-    return { status: 'verified' };
-  }
+  await documentRepo.updateProfileVerification(userId, {
+    situacao: 'matriculado',
+    cursoId: verification.cursoId,
+    numeroProcesso: input.numeroProcesso,
+    verificationStatus: 'verified',
+    telefone: verification.telefone,
+    turno: verification.turno,
+    anoAcademico: verification.anoAcademico,
+  });
+  return { status: 'verified' };
+}
 
   if (!input.documento) {
     return { status: 'needs_document' };
@@ -59,4 +61,5 @@ export async function completeMatriculadoVerification(
     verificationStatus: 'pending',
   });
   return { status: 'pending' };
+
 }

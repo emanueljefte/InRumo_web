@@ -6,7 +6,7 @@ export class SupabaseProfileRepository implements ProfileRepository {
   async getProfile(userId: string): Promise<Profile> {
     const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
     if (error) throw error;
-    return { id: data.id, nome: data.nome, situacao: data.situacao };
+    return { id: data.id, nome: data.nome, situacao: data.situacao, verificationStatus: data.verification_status, registrationIntent: data.registration_intent };
   }
 
   async updateProfile(userId: string, input: UpdateProfileInput): Promise<void> {

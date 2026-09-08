@@ -1,0 +1,18 @@
+Register
+-Se foi possível criar a conta mas não validar a matricula, que depois seja redirecionado para o -Modal de Confirmação fundo transparente
+-Continua registrando mesmo ainda não confirmado como matriculado
+-Numero de processo já em uso
+
+login
+
+
+Pending-verification
+-Verificar estado da conta não atualizando automaticamente, para quem submete documento
+
+Cursos
+-Mais informações adicionais
+
+Admin
+-No Mobile, o fundo tambem transparente
+
+Em Falta: Orientador e o Matriculado

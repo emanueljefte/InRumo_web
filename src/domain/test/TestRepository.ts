@@ -1,11 +1,14 @@
+import type { AreaId } from './Area';
 import type { CourseId } from './TestQuestion';
 
 export type SaveTestResultInput = {
   userId: string;
-  recommendedCourseId: CourseId;
+  recommendedCourseId?: CourseId;       // candidato
+  recommendedAreaId?: AreaId;           // matriculado
   isTie: boolean;
-  runnerUpCourseId: CourseId | null;
-  allScores: { courseId: CourseId; percentage: number }[];
+  runnerUpCourseId?: CourseId | null;
+  runnerUpAreaId?: AreaId | null;
+  allScores: { courseId?: CourseId; areaId?: AreaId; percentage: number }[];
 };
 
 export type TestRepository = {

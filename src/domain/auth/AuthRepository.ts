@@ -1,5 +1,5 @@
-export type SignUpInput = { nome: string; email: string; senha: string };
-export type SignInInput = { email: string; senha: string };
+export type SignUpInput = { nome: string; email: string; senha: string; intent: string; };
+export type SignInInput = { email: string; senha: string; };
 
 export type AuthRepository = {
   signUp(input: SignUpInput): Promise<{ userId: string }>;

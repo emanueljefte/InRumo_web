@@ -2,11 +2,12 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../application/auth/useAuth";
 import gsap from "gsap";
+import { getHomeRoute } from "../application/auth/getHomeRoute";
 
 const SPLASH_DELAY_MS = 700;
 
 export default function SplashPage() {
-  const { session, initializing } = useAuth();
+  const { initializing, profile } = useAuth();
   const navigate = useNavigate();
   const logoRef = useRef<HTMLDivElement>(null);
 
@@ -23,17 +24,11 @@ export default function SplashPage() {
 
   useEffect(() => {
   if (initializing) return;
-
   const timeout = setTimeout(() => {
-    if (!session) {
-      navigate('/landingpage', { replace: true });
-    } else {
-      navigate('/', { replace: true });
-    }
+    navigate(getHomeRoute(profile), { replace: true });
   }, SPLASH_DELAY_MS);
-
   return () => clearTimeout(timeout);
-}, [session, initializing, navigate]);
+}, [profile, initializing, navigate]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">

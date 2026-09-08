@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../application/auth/useAuth';
+import { getHomeRoute } from '../application/auth/getHomeRoute';
 
 export default function NotFoundPage() {
+  const { profile } = useAuth();
+  const homeRoute = getHomeRoute(profile);
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background gap-stack-md px-margin-mobile text-center">
       <p className="font-heading text-display-lg text-primary">404</p>
@@ -9,7 +13,7 @@ export default function NotFoundPage() {
         A página que procuras não existe ou foi movida.
       </p>
       <Link
-        to="/"
+        to={homeRoute}
         className="mt-stack-sm rounded bg-primary px-6 py-2 font-body text-body-md text-primary-foreground"
       >
         Voltar ao início

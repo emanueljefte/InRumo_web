@@ -5,6 +5,9 @@ export type ProfileVerificationUpdate = {
   cursoId: CourseId;
   numeroProcesso: string;
   verificationStatus: 'verified' | 'pending';
+  telefone?: string | null;
+  turno?: string | null;
+  anoAcademico?: string | null;
 };
 
 export type EnrollmentDocumentRepository = {
