@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Sparkles, 
@@ -15,7 +15,6 @@ import { SupabaseTestRepository } from '../../data/supabase/SupabaseTestReposito
 import { useTestResult } from '../../application/test/useTestResult';
 import { RecommendedCourseCard } from '../../components/RecommendedCourseCard';
 import { TakeTestPromptCard } from '../../components/TakeTestPromptCard';
-import { CoursesCatalogTeaser } from '../course/CoursesCatalogTeaser';
 
 export default function CandidateHomePage() {
   const navigate = useNavigate();
@@ -127,7 +126,7 @@ export default function CandidateHomePage() {
 
             {/* Card 2: Catálogo Completo */}
             <div 
-              onClick={() => navigate('/candidate/course')}
+              onClick={() => navigate('/course')}
               className="group p-5 rounded-2xl bg-white border border-[#e8e7f1] hover:border-primary/40 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-4"
             >
               <div className="flex items-center justify-between">
@@ -144,11 +143,6 @@ export default function CandidateHomePage() {
               </div>
             </div>
 
-          </div>
-
-          {/* Teaser dos Cursos (3 Cursos Reais) */}
-          <div className="pt-2">
-            <CoursesCatalogTeaser />
           </div>
 
         </div>

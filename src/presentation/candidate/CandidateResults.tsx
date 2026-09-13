@@ -10,17 +10,44 @@ import {
   Compass
 } from 'lucide-react';
 import { useAuth } from '../../application/auth/useAuth';
-import { useTestResult } from '../../application/test/useTestResult';
 import { SupabaseTestRepository } from '../../data/supabase/SupabaseTestRepository';
 import { COURSE_LABELS } from '../../domain/course/courseLabels';
 import type { CourseId } from '../../domain/test/TestQuestion';
-
-const testRepository = new SupabaseTestRepository();
+import { useEffect, useMemo, useState } from 'react';
+import { isTie, type TestResult } from '../../application/test/calculateTestResult';
+import { associateAnonymousResult } from '../../application/test/associateAnonymousResult';
+import { useTestResult } from '../../application/test/useTestResult';
 
 export default function CandidateResultsPage() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
-  const { result, loading } = useTestResult(testRepository);
+  const { profile, session } = useAuth();
+  const testRepository = useMemo(() => new SupabaseTestRepository(), []);
+  const {  loading } = useTestResult(testRepository);
+  const [result] = useState<TestResult | null>(() => readTestResult());
+  const [associating, setAssociating] = useState(false);
+
+  useEffect(() => {
+    if (!result) {
+      navigate('/test', { replace: true });
+      return;
+    }
+
+    sessionStorage.setItem('vocational_test_result', JSON.stringify({
+      recommendedCourseId: result.recommended.courseId,
+      isTie: isTie(result),
+      runnerUpCourseId: isTie(result) ? result.runnerUp.courseId : null,
+      allScores: result.allScores.map((s) => ({ courseId: s.courseId, percentage: s.percentage })),
+    }));
+
+    // já autenticado — associa o resultado directamente, sem esperar por registo
+    if (session) {
+      setAssociating(true);
+      associateAnonymousResult(session.user.id, testRepository).finally(() => setAssociating(false));
+    }
+  }, [result, session, navigate, testRepository]);
+
+  if (!result) return null;
+  const tied = isTie(result);
 
   // Skeleton Loading
   if (loading) {

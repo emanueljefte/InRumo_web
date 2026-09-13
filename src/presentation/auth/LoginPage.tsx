@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Loader2, ArrowRight, Compass, ShieldCheck, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, AlertCircle, ArrowLeft } from 'lucide-react';
 import { SupabaseAuthRepository } from '../../data/supabase/SupabaseAuthRepository';
 
 // Regex de validação
@@ -86,7 +86,7 @@ export default function LoginPage() {
         {/* Logo / Badge Superior */}
         <div className="relative z-20 flex items-center gap-3">
           <div className="bg-primary/10 border border-primary/30 p-3 rounded-2xl backdrop-blur-md flex items-center justify-center text-primary shadow-inner">
-            <Compass className="w-6 h-6 text-primary" />
+            <img src='/favicon_2.png' alt='' />
           </div>
           <span className="font-heading text-2xl font-bold tracking-tight text-white">InRumo</span>
         </div>
@@ -130,7 +130,7 @@ export default function LoginPage() {
             {/* Topo Mobile (Logo) */}
             <div className="lg:hidden flex items-center gap-2">
               <div className="bg-primary/10 p-2 rounded-xl border border-primary/20 text-primary">
-                <Compass className="w-5 h-5" />
+                <img src='/favicon_2.png' className="w-7 h-7" />
               </div>
               <span className="font-heading text-xl font-bold text-on-surface">InRumo</span>
             </div>

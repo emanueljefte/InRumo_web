@@ -13,6 +13,7 @@ export class SupabaseCourseRepository implements CourseRepository {
       description: data.description,
       curriculum: data.curriculum ?? [],
       areas: data.areas ?? [],
+      outcomes: data.outcomes ?? []
     };
   }
 }

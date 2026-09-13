@@ -5,8 +5,7 @@ import { SupabaseAuthRepository } from '../../data/supabase/SupabaseAuthReposito
 import { SupabaseAdmissionVerificationRepository } from '../../data/supabase/SupabaseAdmissionVerificationRepository';
 import { SupabaseEnrollmentDocumentRepository } from '../../data/supabase/SupabaseEnrollmentDocumentRepository';
 import type { CourseId } from '../../domain/test/TestQuestion';
-import { registerMatriculado } from '../../application/auth/registerMatriculado';
-import { useAuth } from '../../application/auth/useAuth';
+import { completeMatriculadoVerification, } from '../../application/auth/registerMatriculado';
 
 // Expressões Regulares para validação
 const REGEX = {
@@ -42,7 +41,6 @@ const translateErrorMessage = (errorMsg: string): string => {
 };
 
 export default function RegisterMatriculadoPage() {
-    const {profile} = useAuth()
     const navigate = useNavigate();
     const authRepository = useMemo(() => new SupabaseAuthRepository(), []);
     const admissionRepo = useMemo(() => new SupabaseAdmissionVerificationRepository(), []);
@@ -60,6 +58,7 @@ export default function RegisterMatriculadoPage() {
     const [needsDocument, setNeedsDocument] = useState(false);
     const [generalError, setGeneralError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+    const [createdUserId, setCreatedUserId] = useState<string | null>(null);
     const [showConfirm, setShowConfirm] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -103,43 +102,47 @@ export default function RegisterMatriculadoPage() {
     };
 
     const handleSubmitClick = (e: React.FormEvent) => {
-  e.preventDefault();
-  setShowConfirm(true);
-};
+        e.preventDefault();
+        setShowConfirm(true);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setGeneralError(null);
         setShowConfirm(false);
 
-
         // Executa a validação por Regex antes de chamar os repositórios
         if (!validateForm()) return;
 
         setLoading(true);
         try {
-            const result = await registerMatriculado(
-                {
-                    nome: nome.trim(),
-                    email: email.trim().toLowerCase(),
-                    senha,
-                    numeroProcesso: numeroProcesso.trim(),
-                    cursoId,
-                    documento: documento ?? undefined,
-                },
-                authRepository,
-                admissionRepo,
-                documentRepo,
-            );
+            let result;
+
+            if (createdUserId) {
+                // 2.º submit: conta já existe, só falta completar verificação com o documento
+                result = await completeMatriculadoVerification(
+                    createdUserId,
+                    { nome, numeroProcesso, cursoId, documento: documento ?? undefined },
+                    admissionRepo, documentRepo,
+                );
+            } else {
+                // 1.º submit: cria a conta
+                const { userId } = await authRepository.signUp({ nome, email, senha, intent: 'matriculado' });
+                setCreatedUserId(userId);
+                result = await completeMatriculadoVerification(
+                    userId,
+                    { nome, numeroProcesso, cursoId, documento: documento ?? undefined },
+                    admissionRepo, documentRepo,
+                );
+            }
 
             if (result.status === 'verified') {
                 navigate('/student', { replace: true });
             } else if (result.status === 'pending') {
                 navigate('/pending-verification', { replace: true });
-            } else if (result.status === 'account_created_needs_retry') {
-                setGeneralError('A tua conta foi criada, mas houve um problema ao validar a matrícula. Faz login para tentares novamente.');
             } else {
                 setNeedsDocument(true);
+                setGeneralError('Não te encontrámos na lista automática de admitidos. Anexa o teu comprovativo de matrícula.');
             }
         } catch (err) {
             const rawMessage = err instanceof Error ? err.message : 'Erro ao criar conta.';
@@ -160,7 +163,7 @@ export default function RegisterMatriculadoPage() {
                         backgroundImage: `url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1600&q=80')`,
                     }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#fbf8ff]/95 via-[#fbf8ff]/45 to-[#fbf8ff]/65 z-10" />
+                <div className="absolute inset-0 bg-linear-to-t from-[#fbf8ff]/95 via-[#fbf8ff]/45 to-[#fbf8ff]/65 z-10" />
 
                 <div className="relative z-20">
                     <div className="bg-white/90 backdrop-blur-md w-16 h-16 rounded-xl p-3 shadow-sm border border-white/60 flex items-center justify-center">
@@ -320,7 +323,7 @@ export default function RegisterMatriculadoPage() {
                                     {documento ? (
                                         <>
                                             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                                            <span className="truncate max-w-[200px]">{documento.name}</span>
+                                            <span className="truncate max-w-50">{documento.name}</span>
                                         </>
                                     ) : (
                                         <>
@@ -351,12 +354,12 @@ export default function RegisterMatriculadoPage() {
                         </button>
 
                         {showConfirm && (
-                            <div className="fixed inset-0 z-60 bg-on-surface/40 flex items-center justify-center p-4">
+                            <div className="fixed inset-0 z-60 bg-surface/40 flex items-center justify-center p-4">
                                 <div className="bg-surface-container-lowest rounded-2xl p-6 max-w-sm w-full space-y-4">
                                     <p className="font-heading text-headline-sm text-on-surface">Confirma os teus dados</p>
                                     <p className="font-body-sm text-on-surface-variant">
                                         Número de processo: <strong>{numeroProcesso}</strong><br />
-                                        Nome no registo: <strong>{profile?.nome}</strong>
+                                        Nome no registo: <strong>{nome}</strong>
                                     </p>
                                     <p className="font-body-sm text-xs text-on-surface-variant">
                                         Certifica-te que estes dados coincidem exactamente com os do teu processo de admissão — erros de escrita podem atrasar a validação.

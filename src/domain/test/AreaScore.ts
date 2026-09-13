@@ -9,6 +9,6 @@ export type AreaScore = {
 
 export type AreaTestResult = {
   recommended: AreaScore;
-  runnerUp: AreaScore | null; // null se o curso só tiver 1 área com perguntas (não é o caso aqui, mas protege)
+  runnerUp: AreaScore | null;
   allScores: AreaScore[];
 };

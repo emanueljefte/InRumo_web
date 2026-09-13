@@ -81,11 +81,15 @@ export default function OrientadoresPage() {
     setCreating(true);
     try {
       // 1. Cria o orientador no repositório
-      await repository.createOrientador({
+      const result = await repository.createOrientador({
         nome: nome.trim(),
         email: email.trim(),
         especialidade: especialidade.trim()
       });
+
+      if (result.tempPassword) alert(`Senha temporária (só visível agora, para testes): ${result.tempPassword}`)
+
+      console.log(result);
 
       // 2. Recarrega a lista do repositório
       const updatedList = await repository.listOrientadores();
@@ -250,7 +254,7 @@ export default function OrientadoresPage() {
       {/* ================= MODAL NOVO ORIENTADOR ================= */}
       {showForm && (
         <div className="fixed inset-0 z-60 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-surface-container-lowest border border-outline-variant/60 rounded-3xl p-6 max-w-md w-full space-y-5 shadow-xl animate-scaleIn relative">
+          <div className="bg-surface border border-outline-variant/60 rounded-3xl p-6 max-w-md w-full space-y-5 shadow-xl animate-scaleIn relative">
 
             {/* Header do Modal */}
             <div className="flex items-center justify-between pb-1">

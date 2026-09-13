@@ -33,7 +33,7 @@ export default function AdminLayout() {
     <div className="min-h-screen bg-background flex flex-col md:flex-row font-body text-on-background antialiased">
       
       {/* ================= HEADER MOBILE ================= */}
-      <header className="md:hidden bg-surface-container-lowest border-b border-outline-variant/40 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
+      <header className="md:hidden bg-surface border-b border-outline-variant/40 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-xs">
             <Compass className="w-5 h-5" />
@@ -43,7 +43,7 @@ export default function AdminLayout() {
         <button
           type="button"
           onClick={() => setIsMobileOpen(!isMobileOpen)}
-          className="p-2 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors cursor-pointer"
+          className="p-2 text-on-surface-variant hover:bg-surface rounded-xl transition-colors cursor-pointer"
           aria-label={isMobileOpen ? "Fechar menu" : "Abrir menu"}
         >
           {isMobileOpen ? <X size={22} /> : <Menu size={22} />}
@@ -60,7 +60,7 @@ export default function AdminLayout() {
 
       {/* ================= SIDEBAR DESKTOP & MOBILE ================= */}
       <aside
-        className={`fixed md:static top-0 left-0 bottom-0 z-50 bg-surface-container-lowest border-r border-outline-variant/40 p-4 flex flex-col justify-between transition-all duration-300 ease-in-out shrink-0 ${
+        className={`fixed md:static top-0 left-0 bottom-0 z-50 bg-surface border-r border-outline-variant/40 p-4 flex flex-col justify-between transition-all duration-300 ease-in-out shrink-0 ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         } ${isCollapsed ? 'md:w-20' : 'md:w-64'} w-64`}
       >
@@ -73,7 +73,7 @@ export default function AdminLayout() {
               </div>
               {(!isCollapsed || isMobileOpen) && (
                 <div className="flex flex-col">
-                  <span className="font-heading font-bold text-base text-on-surface tracking-tight leading-none">InRumo</span>
+                  <span className="font-heading font-bold text-base text-surface tracking-tight leading-none">InRumo</span>
                   <span className="text-[10px] font-semibold text-primary uppercase tracking-wider mt-0.5">Painel Admin</span>
                 </div>
               )}
@@ -82,7 +82,7 @@ export default function AdminLayout() {
             <button
               type="button"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden md:flex p-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface rounded-xl border border-outline-variant/40 shrink-0 transition-colors cursor-pointer"
+              className="hidden md:flex p-1.5 text-surface hover:bg-surface hover:text-on-surface rounded-xl border border-outline-variant/40 shrink-0 transition-colors cursor-pointer"
               aria-label={isCollapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
             >
               {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -101,7 +101,7 @@ export default function AdminLayout() {
                   `group relative flex items-center gap-3.5 px-3.5 py-3 rounded-2xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
                     isActive
                       ? 'bg-primary/10 text-primary font-bold'
-                      : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
+                      : 'text-surface-variant hover:bg-surface-container-low hover:text-primary'
                   } ${isCollapsed && !isMobileOpen ? 'justify-center px-0' : ''}`
                 }
               >

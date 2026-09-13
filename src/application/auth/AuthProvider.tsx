@@ -13,16 +13,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function loadProfile(userId: string) {
     const { data } = await supabase
       .from('profiles')
-      .select('id, nome, situacao, papel, curso_id, numero_processo, telefone, turno, ano_academico, verification_status')
+      .select('id, nome, email, situacao, papel, curso_id, numero_processo, telefone, turno, ano_academico, verification_status, especialidade')
       .eq('id', userId)
       .single();
 
     setProfile(
       data ? {
-        id: data.id, nome: data.nome, situacao: data.situacao, papel: data.papel,
+        id: data.id, nome: data.nome, email: data.email, situacao: data.situacao, papel: data.papel,
         cursoId: data.curso_id, numeroProcesso: data.numero_processo,
         telefone: data.telefone, turno: data.turno, anoAcademico: data.ano_academico,
         verificationStatus: data.verification_status,
+        especialidade: data.especialidade
       } : null
     );
   }

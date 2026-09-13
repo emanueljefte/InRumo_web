@@ -1,4 +1,3 @@
-// supabase/functions/create-orientador/index.ts
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const supabaseAdmin = createClient(
@@ -59,7 +58,7 @@ Deno.serve(async (req) => {
     // envia email de recuperação de senha, que serve aqui como "definir a tua senha"
     await supabaseAdmin.auth.resetPasswordForEmail(email);
 
-    return new Response(JSON.stringify({ success: true, userId: newUser.user.id }), {
+    return new Response(JSON.stringify({ success: true, userId: newUser.user.id, tempPassword }), {
       headers: {...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {

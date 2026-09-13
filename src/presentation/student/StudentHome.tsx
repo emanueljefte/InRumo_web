@@ -26,7 +26,7 @@ export default function StudentHomePage() {
   // Layout Skeleton para quando os dados do resultado estiverem a carregar
   if (loading) {
     return (
-      <div className="max-w-[1100px] mx-auto space-y-8 animate-pulse">
+      <div className="max-w-275 mx-auto space-y-8 animate-pulse">
         <div className="space-y-3">
           <div className="h-8 bg-surface-container-high rounded-xl w-64" />
           <div className="h-4 bg-surface-container-high rounded-lg w-96" />
@@ -41,7 +41,7 @@ export default function StudentHomePage() {
   const recommendedArea = hasResult && result?.recommendedAreaId ? AREAS[result.recommendedAreaId] : null;
 
   return (
-    <div className="max-w-[1100px] mx-auto space-y-8 animate-fadeIn">
+    <div className="max-w-275 mx-auto space-y-8 animate-fadeIn">
       
       {/* BOAS-VINDAS / CABEÇALHO */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -63,7 +63,7 @@ export default function StudentHomePage() {
 
       {/* HERO CARD PRINCIPAL: RESULTADO OU CHAMADA PARA TESTE */}
       {hasResult && recommendedArea ? (
-        <div className="relative overflow-hidden bg-gradient-to-br from-surface-container-lowest via-surface-container-lowest to-primary/5 rounded-3xl border border-outline-variant/60 p-6 sm:p-8 shadow-xl space-y-6">
+        <div className="relative overflow-hidden bg-linear-to-br from-surface-container-lowest via-surface-container-lowest to-primary/5 rounded-3xl border border-outline-variant/60 p-6 sm:p-8 shadow-xl space-y-6">
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-1.5 bg-primary text-on-primary text-xs font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-xs">
               <Sparkles className="w-3.5 h-3.5" />
@@ -86,7 +86,7 @@ export default function StudentHomePage() {
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <button
               type="button"
-              onClick={() => navigate('/results')}
+              onClick={() => navigate('/student/results')}
               className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-on-primary font-bold text-xs sm:text-sm px-6 py-3.5 rounded-2xl transition-all shadow-xs cursor-pointer"
             >
               <span>Ver Detalhes Completos</span>
@@ -95,7 +95,7 @@ export default function StudentHomePage() {
 
             <button
               type="button"
-              onClick={() => navigate('/chat')}
+              onClick={() => navigate('/student/chat')}
               className="inline-flex items-center justify-center gap-2 bg-surface-container-low hover:bg-surface-container-high text-on-surface font-semibold text-xs sm:text-sm px-5 py-3.5 rounded-2xl transition-all border border-outline-variant/40 cursor-pointer"
             >
               <MessageCircle className="w-4 h-4 text-primary" />
@@ -104,7 +104,7 @@ export default function StudentHomePage() {
           </div>
         </div>
       ) : (
-        <div className="relative overflow-hidden bg-gradient-to-br from-surface-container-lowest via-surface-container-lowest to-primary/5 rounded-3xl border border-outline-variant/60 p-6 sm:p-8 shadow-xl space-y-6">
+        <div className="relative overflow-hidden bg-linear-to-br from-surface-container-lowest via-surface-container-lowest to-primary/5 rounded-3xl border border-outline-variant/60 p-6 sm:p-8 shadow-xl space-y-6">
           <div className="max-w-xl space-y-3">
             <span className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full border border-primary/20">
               <Sparkles className="w-3.5 h-3.5" />
@@ -120,7 +120,7 @@ export default function StudentHomePage() {
 
           <button
             type="button"
-            onClick={() => navigate('/tests')}
+            onClick={() => navigate('/student/test/format')}
             className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-on-primary font-bold text-xs sm:text-sm px-6 py-3.5 rounded-2xl transition-all shadow-xs cursor-pointer"
           >
             <span>Começar Avaliação Agora</span>
@@ -133,7 +133,7 @@ export default function StudentHomePage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         
         <div
-          onClick={() => navigate('/tests')}
+          onClick={() => navigate('/student/test')}
           className="group p-5 bg-surface-container-lowest rounded-2xl border border-outline-variant/60 hover:border-primary/40 hover:shadow-md transition-all cursor-pointer space-y-3"
         >
           <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -149,7 +149,7 @@ export default function StudentHomePage() {
         </div>
 
         <div
-          onClick={() => navigate('/results')}
+          onClick={() => navigate('/student/results')}
           className="group p-5 bg-surface-container-lowest rounded-2xl border border-outline-variant/60 hover:border-primary/40 hover:shadow-md transition-all cursor-pointer space-y-3"
         >
           <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -165,7 +165,7 @@ export default function StudentHomePage() {
         </div>
 
         <div
-          onClick={() => navigate('/schedule')}
+          onClick={() => navigate('/student/schedule')}
           className="group p-5 bg-surface-container-lowest rounded-2xl border border-outline-variant/60 hover:border-primary/40 hover:shadow-md transition-all cursor-pointer space-y-3"
         >
           <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -208,7 +208,7 @@ export default function StudentHomePage() {
 
         <button
           type="button"
-          onClick={() => navigate('/chat')}
+          onClick={() => navigate('/student/chat')}
           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs sm:text-sm px-5 py-3 rounded-xl transition-all cursor-pointer shrink-0"
         >
           <MessageCircle className="w-4 h-4" />

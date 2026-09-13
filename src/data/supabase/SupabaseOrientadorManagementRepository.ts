@@ -1,6 +1,6 @@
 import { supabase } from '../../api/supabase';
 import type { CreateOrientadorInput, OrientadorSummary } from '../../domain/admin/OrientadorManagement';
-import type { OrientadorManagementRepository, } from '../../domain/admin/OrientadorManagementRepository';
+import type { CreateOrientadorResult, OrientadorManagementRepository, } from '../../domain/admin/OrientadorManagementRepository';
 
 export class SupabaseOrientadorManagementRepository implements OrientadorManagementRepository {
   async listOrientadores(): Promise<OrientadorSummary[]> {
@@ -12,7 +12,7 @@ export class SupabaseOrientadorManagementRepository implements OrientadorManagem
     return data;
   }
 
-  async createOrientador(input: CreateOrientadorInput) {
+  async createOrientador(input: CreateOrientadorInput): Promise<CreateOrientadorResult> {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error('Sessão inválida.');
 
@@ -22,6 +22,8 @@ export class SupabaseOrientadorManagementRepository implements OrientadorManagem
 
     if (error) throw error;
     if (data?.error) throw new Error(data.error);
+
+    return { userId: data.userId, tempPassword: data.tempPassword };
   }
 
   async removeOrientador(id: string) {

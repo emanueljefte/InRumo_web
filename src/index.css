@@ -1,16 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  /* Cores personalizadas */
+  /* ================= TOKENS ORIGINAIS ================= */
   --color-background: #f7f8fa;
   --color-surface: #ffffff;
-  --color-primary: #c9932e;
   --color-primary-muted: #fdf3e1;
   --color-text: #1a1a1f;
   --color-text-muted: #6b7280;
   --color-border: #e5e7eb;
   --color-success: #15803d;
-  --color-error: #b91c1c;
 
   /* Fontes */
   --font-heading: 'Space Grotesk', sans-serif;
@@ -20,4 +18,35 @@
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
+
+  /* ================= CORES MATERIAL 3 / LAYOUT ================= */
+  --color-primary: #c9932e;
+  --color-on-primary: #ffffff;
+
+  /* Superfícies (Surface Containers) */
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f7f8fa;
+  --color-surface-container-high: #eaebee;
+
+  /* Texto e Conteúdo (On Surface) */
+  --color-on-surface: #1a1a1f;
+  --color-on-surface-variant: #6b7280;
+
+  /* Bordas e Divisores */
+  --color-outline-variant: #e5e7eb;
+
+  /* Erro e Status */
+  --color-error: #b91c1c;
+}
+
+/* Scrollbar personalizada para a navegacao */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-outline-variant);
+  border-radius: 4px;
 }

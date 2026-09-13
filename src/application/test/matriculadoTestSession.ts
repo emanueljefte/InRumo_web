@@ -1,6 +1,7 @@
 import { selectMatriculadoQuestions } from './selectMatriculadoQuestions';
 import type { CourseId } from '../../domain/test/TestQuestion';
-import type { MatriculadoQuestion } from '../../data/test/matriculdoQuestionBank';
+import type { QuestionAnswer } from '../../domain/test/QuestionAnswer';
+import type { MatriculadoQuestion, QuestionType } from '../../domain/test/MatriculadoQuestion';
 
 const SESSION_KEY = 'matriculado_test_session';
 const MAX_SESSION_AGE_MS = 1000 * 60 * 60 * 2;
@@ -8,12 +9,12 @@ const MAX_SESSION_AGE_MS = 1000 * 60 * 60 * 2;
 export type MatriculadoTestSession = {
   cursoId: CourseId;
   questions: MatriculadoQuestion[];
-  answers: Record<string, number>;
+  answers: Record<string, QuestionAnswer>;
   currentIndex: number;
   startedAt: number;
 };
 
-export function loadOrCreateMatriculadoSession(cursoId: CourseId): MatriculadoTestSession {
+export function loadOrCreateMatriculadoSession(cursoId: CourseId, formatFilter?: QuestionType[]): MatriculadoTestSession {
   const raw = sessionStorage.getItem(SESSION_KEY);
 
   if (raw) {
@@ -24,7 +25,7 @@ export function loadOrCreateMatriculadoSession(cursoId: CourseId): MatriculadoTe
 
   const session: MatriculadoTestSession = {
     cursoId,
-    questions: selectMatriculadoQuestions(cursoId),
+    questions: selectMatriculadoQuestions(cursoId, formatFilter),
     answers: {},
     currentIndex: 0,
     startedAt: Date.now(),
@@ -40,3 +41,5 @@ export function saveMatriculadoSession(session: MatriculadoTestSession) {
 export function clearMatriculadoSession() {
   sessionStorage.removeItem(SESSION_KEY);
 }
+
+export { SESSION_KEY };

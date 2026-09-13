@@ -1,6 +1,5 @@
 import { ChevronDown, HelpCircle } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 const faqs = [
   {
@@ -23,7 +22,6 @@ const faqs = [
 
 export default function FaqSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const navigate = useNavigate()
   {/* --- SECÇÃO: PERGUNTAS FREQUENTES (FAQ) --- */ }
   return (
     < section className="py-24 bg-surface-container-lowest border-t border-outline-variant/40 relative" >
@@ -86,7 +84,7 @@ export default function FaqSection() {
         </div>
 
         {/* Card de Suporte Adicional */}
-        <div className="mt-12 p-6 rounded-2xl bg-surface-container-low/40 border border-outline-variant/50 text-center flex flex-col sm:flex-row items-center justify-between gap-4">
+        {/* <div className="mt-12 p-6 rounded-2xl bg-surface-container-low/40 border border-outline-variant/50 text-center flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-center sm:text-left">
             <h4 className="font-heading font-bold text-on-surface text-sm">Ainda tens dúvidas?</h4>
             <p className="text-xs text-on-surface-variant mt-0.5">Fala diretamente com o nosso assistente de orientação por IA.</p>
@@ -97,7 +95,7 @@ export default function FaqSection() {
           >
             Conversar com a IA
           </button>
-        </div>
+        </div> */}
 
       </div>
     </section >

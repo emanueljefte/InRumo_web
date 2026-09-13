@@ -90,8 +90,9 @@ export default function SchedulePage() {
         )
       );
       setBooking(null);
-    } catch (error) {
-      console.error('Erro ao confirmar agendamento:', error);
+    } catch (err) {
+    console.log(err instanceof Error ? err.message : 'Não foi possível marcar a sessão.'); 
+    setBooking(null);
     } finally {
       setIsSubmitting(false);
     }

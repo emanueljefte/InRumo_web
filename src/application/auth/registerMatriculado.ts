@@ -10,6 +10,12 @@ export type RegisterMatriculadoResult =
   | { status: 'needs_document' }
   | { status: 'account_created_needs_retry'; userId: string }; // signUp ok, resto falhou
 
+type SupabaseError = { code?: string; message?: string };
+
+export function isSupabaseError(err: unknown): err is SupabaseError {
+  return typeof err === 'object' && err !== null && 'code' in err;
+}
+
 export async function registerMatriculado(
   input: { nome: string; email: string; senha: string; numeroProcesso: string; cursoId: CourseId; documento?: File },
   authRepository: AuthRepository,
@@ -36,17 +42,21 @@ export async function completeMatriculadoVerification(
 ): Promise<RegisterMatriculadoResult> {
   const verification = await admissionRepo.verify(input.numeroProcesso);
 
+  console.log(verification);
+  
   if (verification.matched && normalizeName(verification.nome) === normalizeName(input.nome)) {
-  await documentRepo.updateProfileVerification(userId, {
-    situacao: 'matriculado',
-    cursoId: verification.cursoId,
-    numeroProcesso: input.numeroProcesso,
-    verificationStatus: 'verified',
-    telefone: verification.telefone,
-    turno: verification.turno,
-    anoAcademico: verification.anoAcademico,
-  });
-  return { status: 'verified' };
+   try {
+      await documentRepo.updateProfileVerification(userId, {
+        situacao: 'matriculado', cursoId: verification.cursoId, numeroProcesso: input.numeroProcesso,
+        verificationStatus: 'verified', telefone: verification.telefone, turno: verification.turno, anoAcademico: verification.anoAcademico,
+      });
+      return { status: 'verified' as const };
+    } catch (err) {
+      if (isSupabaseError(err) && err.code === '23505') {
+    throw new Error('Este número de processo já está associado a outra conta.', { cause: err });
+  }
+      throw err;
+    }
 }
 
   if (!input.documento) {

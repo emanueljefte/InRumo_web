@@ -5,6 +5,7 @@ import type { CourseId } from '../../domain/test/TestQuestion';
 export type Profile = {
   id: string;
   nome: string;
+  email?: string;
   situacao: 'candidate' | 'matriculado';
   papel: 'utilizador' | 'orientador' | 'administrador_academico';
   cursoId?: CourseId;
@@ -12,7 +13,10 @@ export type Profile = {
   telefone?: string | null;
   turno?: string | null;
   anoAcademico?: string | null;
+  registrationIntent?: string | null;
   verificationStatus: 'not_applicable' | 'verified' | 'pending' | 'rejected';
+  avatarUrl?: string | null;
+  especialidade?: string;
 };
 
 export type AuthContextValue = {

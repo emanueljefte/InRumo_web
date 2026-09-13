@@ -14,9 +14,13 @@ export default function StudentProfilePage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatarUrl ?? '')
 
   const nameInputId = useId();
   const emailInputId = useId();
+
+  console.log(profile);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,12 +47,19 @@ export default function StudentProfilePage() {
     setNome(profile?.nome ?? '');
     setError(null);
   };
-
-  const initialLetter = nome.trim().charAt(0).toUpperCase();
+  const handleAvatarChange = async (file: File) => {
+    if (!session) return;
+    try {
+      const url = await profileRepository.uploadAvatar(session.user.id, file);
+      setAvatarUrl(url);
+    } catch {
+      setError('Não foi possível actualizar a fotografia.');
+    }
+  };
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 font-body text-on-background antialiased pb-12">
-      
+
       {/* Cabeçalho */}
       <header className="border-b border-outline-variant/40 pb-5 space-y-1">
         <h1 className="font-heading text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">
@@ -61,20 +72,25 @@ export default function StudentProfilePage() {
 
       {/* Card de Identificação de Perfil & Avatar */}
       <section className="bg-surface-container-lowest rounded-3xl border border-outline-variant/40 p-6 sm:p-8 shadow-xs flex flex-col sm:flex-row items-center gap-6">
-        
+
         {/* Avatar */}
         <div className="relative group shrink-0">
-          <div className="w-24 h-24 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-heading text-3xl font-bold uppercase shadow-inner">
-            {initialLetter || <User className="w-10 h-10 text-primary/70" />}
-          </div>
+
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={nome} className="w-full h-full rounded-full object-cover" />
+          ) : (
+            <div className="w-24 h-24 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-heading text-3xl font-bold uppercase shadow-inner">
+              {nome.charAt(0) || <User className="w-10 h-10" />}
+            </div>
+          )}
 
           <button
             type="button"
-            aria-label="Alterar fotografia (recurso em breve)"
-            disabled
-            className="absolute bottom-0 right-0 p-2.5 bg-surface-container-high text-on-surface-variant/50 border border-outline-variant/60 rounded-full shadow-xs cursor-not-allowed opacity-80"
+            title="Alterar fotografia"
+            className="absolute bottom-0 right-0 p-2.5 bg-surface-container-high text-on-surface-variant border border-outline-variant/60 rounded-full shadow-xs opacity-80"
           >
             <Camera size={14} />
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleAvatarChange(e.target.files[0])} />
           </button>
         </div>
 
@@ -94,7 +110,7 @@ export default function StudentProfilePage() {
 
       {/* Card: Informações Pessoais */}
       <section className="bg-surface-container-lowest rounded-3xl border border-outline-variant/40 p-6 sm:p-8 space-y-6 shadow-xs">
-        
+
         <div className="flex items-center justify-between border-b border-outline-variant/30 pb-4">
           <div className="flex items-center gap-2 text-on-surface">
             <User className="w-5 h-5 text-primary" />
@@ -115,8 +131,8 @@ export default function StudentProfilePage() {
 
         {/* Alertas Acessíveis */}
         {error && (
-          <div 
-            role="alert" 
+          <div
+            role="alert"
             aria-live="assertive"
             className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-error/10 border border-error/20 text-error text-xs font-semibold animate-in fade-in"
           >
@@ -126,8 +142,8 @@ export default function StudentProfilePage() {
         )}
 
         {saved && (
-          <div 
-            role="status" 
+          <div
+            role="status"
             aria-live="polite"
             className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-xs font-semibold animate-in fade-in"
           >
@@ -137,10 +153,10 @@ export default function StudentProfilePage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          
+
           {/* Nome */}
           <div className="space-y-2">
-            <label 
+            <label
               htmlFor={nameInputId}
               className="block font-body text-xs font-semibold text-on-surface"
             >
@@ -154,17 +170,16 @@ export default function StudentProfilePage() {
               disabled={!editing || loading}
               required
               placeholder="Introduz o teu nome"
-              className={`w-full border rounded-2xl px-4 py-3 text-sm font-body text-on-surface transition-all focus:outline-none ${
-                editing
+              className={`w-full border rounded-2xl px-4 py-3 text-sm font-body text-on-surface transition-all focus:outline-none ${editing
                   ? 'border-primary/50 bg-surface-container-lowest focus:ring-2 focus:ring-primary/30 shadow-xs'
                   : 'border-outline-variant/40 bg-surface-container-low/50 text-on-surface-variant cursor-not-allowed'
-              }`}
+                }`}
             />
           </div>
 
           {/* Email */}
           <div className="space-y-2">
-            <label 
+            <label
               htmlFor={emailInputId}
               className="block font-body text-xs font-semibold text-on-surface"
             >
@@ -195,7 +210,7 @@ export default function StudentProfilePage() {
               >
                 Cancelar
               </button>
-              
+
               <button
                 type="submit"
                 disabled={loading || !nome.trim()}

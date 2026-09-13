@@ -1,5 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, // service role: função corre no servidor, não sujeita a RLS do utilizador
@@ -34,6 +39,7 @@ Deno.serve(async (req) => {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
+        ...corsHeaders,
         'Content-Type': 'application/json',
         'x-api-key': Deno.env.get('ANTHROPIC_API_KEY')!,
         'anthropic-version': '2023-06-01',
@@ -63,13 +69,13 @@ Deno.serve(async (req) => {
     if (insertError) throw insertError;
 
     return new Response(JSON.stringify({ success: true }), {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('ai-chat-reply error:', error);
     return new Response(JSON.stringify({ error: 'Falha ao gerar resposta' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders,  'Content-Type': 'application/json' },
     });
   }
 });

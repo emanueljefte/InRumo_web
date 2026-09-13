@@ -1,8 +1,7 @@
-// presentation/test/MatriculadoTestPage.tsx
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
-import { X, ArrowLeft, ArrowRight } from 'lucide-react';
+import { X, ArrowLeft, } from 'lucide-react';
 import { useAuth } from '../../application/auth/useAuth';
 import {
   clearMatriculadoSession,
@@ -10,8 +9,12 @@ import {
   saveMatriculadoSession,
   type MatriculadoTestSession,
 } from '../../application/test/matriculadoTestSession';
-import { calculateAreaResult } from '../../application/test/calculateAreaResult';
+import { calculateAreaResult, isAreaTie } from '../../application/test/calculateAreaResult';
 import type { CourseId } from '../../domain/test/TestQuestion';
+import { AREAS } from '../../domain/test/Area';
+import type { QuestionAnswer } from '../../domain/test/QuestionAnswer';
+import { QuestionRenderer } from './questions/QuestionRenderer';
+import type { QuestionType } from '../../domain/test/MatriculadoQuestion';
 
 export default function MatriculadoTestPage() {
   const navigate = useNavigate();
@@ -19,40 +22,59 @@ export default function MatriculadoTestPage() {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const [session, setSession] = useState<MatriculadoTestSession>(() =>
-    loadOrCreateMatriculadoSession(profile!.cursoId as CourseId)
-  );
+  const [session, setSession] = useState<MatriculadoTestSession>(() => {
+    const rawFormat = sessionStorage.getItem('matriculado_test_format');
+    const formatFilter: QuestionType[] | undefined = rawFormat ? JSON.parse(rawFormat) ?? undefined : undefined;
+    return loadOrCreateMatriculadoSession(profile!.cursoId as CourseId, formatFilter);
+  });
 
   const questions = session.questions;
   const totalQuestions = questions.length;
   const currentQuestion = questions[session.currentIndex];
-  const selectedScore = session.answers[currentQuestion.id] ?? null;
+  const hasAnswered = currentQuestion.id in session.answers;
   const progressPercentage = ((session.currentIndex + 1) / totalQuestions) * 100;
+
+  const liveResult = useMemo(
+    () => calculateAreaResult(session.questions, session.answers, session.cursoId),
+    [session.answers, session.questions, session.cursoId]
+  );
 
   useEffect(() => {
     gsap.fromTo(cardRef.current, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' });
   }, [session.currentIndex]);
 
-  const handleScoreSelect = useCallback((score: number) => {
-    const updated = { ...session, answers: { ...session.answers, [currentQuestion.id]: score } };
-    setSession(updated);
-    saveMatriculadoSession(updated);
-  }, [session, currentQuestion.id]);
-
-  const handleNext = useCallback(() => {
-    if (selectedScore === null) return;
-
-    if (session.currentIndex < questions.length - 1) {
-      const updated = { ...session, currentIndex: session.currentIndex + 1 };
+  const advance = useCallback((currentSession: MatriculadoTestSession) => {
+    if (currentSession.currentIndex < questions.length - 1) {
+      const updated = { ...currentSession, currentIndex: currentSession.currentIndex + 1 };
       setSession(updated);
       saveMatriculadoSession(updated);
     } else {
-      const result = calculateAreaResult(session.answers, session.cursoId);
-      sessionStorage.setItem('matriculado_test_result', JSON.stringify(result));
+      const result = calculateAreaResult(currentSession.questions, currentSession.answers, currentSession.cursoId);
+      sessionStorage.setItem('matriculado_test_result', JSON.stringify({
+        recommendedAreaId: result.recommended.areaId,
+        isTie: isAreaTie(result),
+        runnerUpAreaId: result.runnerUp?.areaId ?? null,
+        allScores: result.allScores.map((s) => ({ areaId: s.areaId, percentage: s.percentage })),
+      }));
       clearMatriculadoSession();
       navigate('/student/results');
     }
-  }, [session, selectedScore, questions.length, navigate]);
+  }, [questions.length, navigate]);
+
+  const handleAnswer = useCallback((answer: QuestionAnswer) => {
+    const updatedAnswers = { ...session.answers, [currentQuestion.id]: answer };
+    const updated = { ...session, answers: updatedAnswers };
+    setSession(updated);
+    saveMatriculadoSession(updated);
+
+    // avança automaticamente para a próxima pergunta (excepto ranking, que já tem botão "Confirmar" próprio)
+    if (answer.type !== 'ranking') {
+      advance(updated);
+    } else {
+      advance(updated);
+    }
+  }, [session, currentQuestion.id]);
+
 
   const handlePrev = useCallback(() => {
     if (session.currentIndex > 0) {
@@ -65,17 +87,28 @@ export default function MatriculadoTestPage() {
   }, [session, navigate]);
 
   useEffect(() => {
+    if (currentQuestion.type !== 'likert') return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (['1', '2', '3', '4', '5'].includes(e.key)) handleScoreSelect(Number(e.key));
-      if (e.key === 'Enter' && selectedScore !== null) handleNext();
+      if (['1', '2', '3', '4', '5'].includes(e.key)) handleAnswer({ type: 'likert', score: Number(e.key) as 1 | 2 | 3 | 4 | 5 });
+      // if (e.key === 'Enter' && selectedScore !== null) handleNext();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedScore, handleScoreSelect, handleNext]);
+  }, [currentQuestion.type, handleAnswer]);
 
   return (
     <div className="fixed inset-0 z-50 bg-background overflow-y-auto flex flex-col items-center justify-center p-4 sm:p-6 md:p-10 font-body antialiased text-on-background">
       <div className="w-full max-w-200 flex justify-end mb-4">
+        {liveResult.recommended.maxPossible > 0 && (
+          <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+            <span>A liderar:</span>
+            <span className="font-bold text-primary">{AREAS[liveResult.recommended.areaId].nome}</span>
+            <div className="flex-1 bg-surface-container h-1.5 rounded-full overflow-hidden max-w-32">
+              <div className="bg-primary h-full rounded-full transition-all duration-500" style={{ width: `${liveResult.recommended.percentage}%` }} />
+            </div>
+          </div>
+        )}
         <button type="button" onClick={() => setShowExitConfirm(true)}
           className="flex items-center gap-1.5 text-xs font-semibold text-outline hover:text-on-background transition-colors py-1.5 px-3 rounded-lg hover:bg-surface-container">
           <X className="w-4 h-4" /> Sair
@@ -98,6 +131,10 @@ export default function MatriculadoTestPage() {
         </h1>
 
         <div className="py-4">
+          <QuestionRenderer question={currentQuestion} onAnswer={handleAnswer} />
+        </div>
+
+        {/* <div className="py-4">
           <div className="grid grid-cols-5 gap-2 sm:gap-4 max-w-150 mx-auto items-start">
             {[1, 2, 3, 4, 5].map((score) => {
               const isSelected = selectedScore === score;
@@ -108,9 +145,8 @@ export default function MatriculadoTestPage() {
               return (
                 <div key={score} className="flex flex-col items-center gap-3">
                   <button type="button" onClick={() => handleScoreSelect(score)}
-                    className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center font-heading text-lg sm:text-xl font-bold transition-all duration-200 ${
-                      isSelected ? 'bg-primary text-white ring-4 ring-primary-container/40 scale-105 shadow-sm' : 'bg-white border border-outline-variant text-on-background hover:border-primary hover:bg-primary-container/10'
-                    }`}>
+                    className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center font-heading text-lg sm:text-xl font-bold transition-all duration-200 ${isSelected ? 'bg-primary text-white ring-4 ring-primary-container/40 scale-105 shadow-sm' : 'bg-white border border-outline-variant text-on-background hover:border-primary hover:bg-primary-container/10'
+                      }`}>
                     {score}
                   </button>
                   {label && <span className="text-[11px] sm:text-xs text-outline text-center leading-tight font-medium max-w-20">{label}</span>}
@@ -118,17 +154,16 @@ export default function MatriculadoTestPage() {
               );
             })}
           </div>
-        </div>
+        </div> */}
 
         <div className="pt-6 border-t border-surface-container-high flex items-center justify-between">
           <button type="button" onClick={handlePrev}
             className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-on-background border border-outline-variant bg-white hover:bg-surface-container py-3 px-6 rounded-xl transition-all">
             <ArrowLeft className="w-4 h-4" /> Voltar
           </button>
-          <button type="button" onClick={handleNext} disabled={selectedScore === null}
-            className="bg-primary hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.99] text-white text-xs sm:text-sm font-semibold py-3 px-6 sm:px-8 rounded-xl shadow-xs transition-all duration-150 flex items-center gap-2">
-            Próximo <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-          </button>
+          {hasAnswered && (
+            <span className="text-xs text-primary font-medium">Respondido</span>
+          )}
         </div>
       </div>
 

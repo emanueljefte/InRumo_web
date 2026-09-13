@@ -13,8 +13,7 @@ export default function CandidateProfilePage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  // const displayedNome = nome || profile?.nome || '';
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatarUrl ?? '')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +35,16 @@ export default function CandidateProfilePage() {
     }
   };
 
+  const handleAvatarChange = async (file: File) => {
+  if (!session) return;
+  try {
+    const url = await profileRepository.uploadAvatar(session.user.id, file);
+    setAvatarUrl(url);
+  } catch {
+    setError('Não foi possível actualizar a fotografia.');
+  }
+};
+
   const handleCancel = () => {
     setEditing(false);
     setNome(profile?.nome ?? '');
@@ -44,7 +53,7 @@ export default function CandidateProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 font-body text-on-background antialiased pb-12">
-      
+
       {/* Cabeçalho */}
       <div className="border-b border-outline-variant/40 pb-5 space-y-1">
         <h1 className="font-heading text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">
@@ -57,20 +66,25 @@ export default function CandidateProfilePage() {
 
       {/* Card de Identificação de Perfil */}
       <div className="bg-surface-container-lowest rounded-3xl border border-outline-variant/40 p-6 sm:p-8 shadow-xs flex flex-col sm:flex-row items-center gap-6">
-        
+
         {/* Avatar com Badge de Edição */}
         <div className="relative group shrink-0">
-          <div className="w-24 h-24 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-heading text-3xl font-bold uppercase shadow-inner">
-            {nome.charAt(0) || <User className="w-10 h-10" />}
-          </div>
+
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={nome} className="w-full h-full rounded-full object-cover" />
+          ) : (
+            <div className="w-24 h-24 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-heading text-3xl font-bold uppercase shadow-inner">
+              {nome.charAt(0) || <User className="w-10 h-10" />}
+            </div>
+          )}
 
           <button
             type="button"
-            title="Alterar fotografia — em breve"
-            disabled
-            className="absolute bottom-0 right-0 p-2.5 bg-surface-container-high text-on-surface-variant border border-outline-variant/60 rounded-full shadow-xs cursor-not-allowed opacity-80"
+            title="Alterar fotografia"
+            className="absolute bottom-0 right-0 p-2.5 bg-surface-container-high text-on-surface-variant border border-outline-variant/60 rounded-full shadow-xs opacity-80"
           >
             <Camera size={14} />
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleAvatarChange(e.target.files[0])} />
           </button>
         </div>
 
@@ -92,12 +106,12 @@ export default function CandidateProfilePage() {
 
       {/* Card: Formulário de Informações Pessoais */}
       <div className="bg-surface-container-lowest rounded-3xl border border-outline-variant/40 p-6 sm:p-8 space-y-6 shadow-xs">
-        
+
         <div className="flex items-center justify-between border-b border-outline-variant/30 pb-4">
           <h3 className="font-heading text-base sm:text-lg font-bold text-on-surface">
             Informações Pessoais
           </h3>
-          
+
           {!editing && (
             <button
               type="button"
@@ -126,7 +140,7 @@ export default function CandidateProfilePage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          
+
           {/* Campo: Nome Completo */}
           <div className="space-y-2">
             <label className="block font-body text-xs font-semibold text-on-surface">
@@ -140,11 +154,10 @@ export default function CandidateProfilePage() {
                 disabled={!editing || loading}
                 required
                 placeholder="Introduz o teu nome completo"
-                className={`w-full border rounded-2xl px-4 py-3 text-sm font-body text-on-surface transition-all focus:outline-none ${
-                  editing
-                    ? 'border-primary/50 bg-surface-container-lowest focus:ring-2 focus:ring-primary/30 shadow-xs'
-                    : 'border-outline-variant/40 bg-surface-container-low/50 text-on-surface-variant cursor-not-allowed'
-                }`}
+                className={`w-full border rounded-2xl px-4 py-3 text-sm font-body text-on-surface transition-all focus:outline-none ${editing
+                  ? 'border-primary/50 bg-surface-container-lowest focus:ring-2 focus:ring-primary/30 shadow-xs'
+                  : 'border-outline-variant/40 bg-surface-container-low/50 text-on-surface-variant cursor-not-allowed'
+                  }`}
               />
             </div>
           </div>
@@ -181,7 +194,7 @@ export default function CandidateProfilePage() {
               >
                 Cancelar
               </button>
-              
+
               <button
                 type="submit"
                 disabled={loading || !nome.trim()}

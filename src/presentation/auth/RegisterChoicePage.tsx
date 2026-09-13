@@ -16,7 +16,7 @@ export default function RegisterChoicePage() {
           }}
         />
         {/* Soft Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#fbf8ff]/95 via-[#fbf8ff]/50 to-[#fbf8ff]/70 z-10" />
+        <div className="absolute inset-0 bg-linear-to-t from-[#fbf8ff]/95 via-[#fbf8ff]/50 to-[#fbf8ff]/70 z-10" />
 
         {/* Card em Perspectiva (Decoração Visual) */}
         <div className="absolute top-1/2 -right-12 -translate-y-1/2 w-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/60 p-6 shadow-xl z-10 pointer-events-none opacity-40 blur-[0.5px]">
@@ -32,13 +32,7 @@ export default function RegisterChoicePage() {
         <div className="relative z-20">
           <div className="bg-white/90 backdrop-blur-md w-16 h-16 rounded-xl p-3 shadow-sm border border-white/60 flex items-center justify-center">
             <div className="flex flex-col items-center justify-center text-primary">
-              <div className="w-7 h-7 rounded-full border-2 border-primary flex items-center justify-center relative">
-                <span className="w-1.5 h-1.5 bg-primary rounded-full" />
-                <div className="absolute -top-1 w-0.5 h-1.5 bg-primary" />
-                <div className="absolute -bottom-1 w-0.5 h-1.5 bg-primary" />
-                <div className="absolute -left-1 h-0.5 w-1.5 bg-primary" />
-                <div className="absolute -right-1 h-0.5 w-1.5 bg-primary" />
-              </div>
+              <img src="/favicon_2.png" alt="" />
               <span className="text-[8px] font-bold tracking-tight text-[#1a1b22] mt-0.5">InRumo</span>
             </div>
           </div>
@@ -65,11 +59,7 @@ export default function RegisterChoicePage() {
 
           {/* Topo Mobile (Logo) */}
           <div className="lg:hidden flex items-center gap-3 mb-2">
-            <div className="bg-white p-2.5 rounded-lg shadow-sm border border-slate-200">
-              <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center relative">
-                <span className="w-1 h-1 bg-primary rounded-full" />
-              </div>
-            </div>
+             <img src="/favicon_2.png" alt="" />
             <span className="font-heading text-xl font-bold text-[#1a1b22]">InRumo</span>
           </div>
 

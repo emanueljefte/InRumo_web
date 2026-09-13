@@ -1,4 +1,5 @@
 import { supabase } from '../../api/supabase';
+import { isSupabaseError } from '../../application/auth/registerMatriculado';
 import type { AvailabilitySlot, OrientationSession } from '../../domain/schedule/OrientationSession';
 import type { ScheduleRepository } from '../../domain/schedule/ScheduleRepository';
 import { SupabaseNotificationRepository } from './SupabaseNotificationRepository';
@@ -30,7 +31,12 @@ export class SupabaseScheduleRepository implements ScheduleRepository {
         const { error } = await supabase.from('orientation_sessions').insert({
             matriculado_id: matriculadoId, orientador_id: orientadorId, data_hora: dataHora,
         });
-        if (error) throw error;
+        if (error) {
+    if (isSupabaseError(error) && error.code === '23505') {
+      throw new Error('Este horário já foi reservado por outra pessoa. Escolhe outro.');
+    }
+    throw error;
+  }
         
         const notificationRepo = new SupabaseNotificationRepository();
         await notificationRepo.create(orientadorId, 'sessao_marcada', 'Uma nova sessão de orientação foi marcada.');

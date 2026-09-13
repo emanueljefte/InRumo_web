@@ -39,6 +39,8 @@ import AdminLayout from './presentation/admin/AdminLayout';
 import ImportAdmittedStudentsPage from './presentation/admin/ImportAdmittedStudentsPage.';
 import OrientadoresPage from './presentation/admin/OrientadorPage';
 import StudentProfilePage from './presentation/student/Profile';
+import TestFormatSelectionPage from './presentation/test/TestFormatSelectionPage';
+import { RequireTestCompleted } from './presentation/candidate/RequireTestCompleted';
 
 
 function ProtectedRoute({ children, allow }: { children: React.ReactNode; allow?: 'candidate' | 'matriculado' | 'orientador' | 'administrador' }) {
@@ -84,12 +86,14 @@ export default function App() {
           <Route path="/candidate" element={<ProtectedRoute allow="candidate"><CandidateTopNavLayout /></ProtectedRoute>}>
             <Route index element={<CandidateHomePage />} />
             <Route path="results" element={<CandidateResultsPage />} />
-            <Route path="chat" element={<ChatPage allowEscalation={false} />} />
+
+            <Route path="chat" element={<RequireTestCompleted><ChatPage allowEscalation={false} /></RequireTestCompleted>} /> 
             <Route path="profile" element={<CandidateProfilePage />} />
           </Route>
 
           <Route path="/student" element={<ProtectedRoute allow="matriculado"><DashboardLayout /></ProtectedRoute>}>
             <Route index element={<StudentHomePage />} />
+            <Route path="test/format" element={<TestFormatSelectionPage />} />
             <Route path="test" element={<MatriculadoTestPage />} />
             <Route path="results" element={<MatriculadoResultsPage />} />
             <Route path="documents" element={<DocumentsPage />} />

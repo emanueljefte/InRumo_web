@@ -1,6 +1,7 @@
 
-import { MATRICULADO_QUESTION_BANK, type MatriculadoQuestion } from '../../data/test/matriculdoQuestionBank';
+import { MATRICULADO_QUESTION_BANK, } from '../../data/test/matriculdoQuestionBank';
 import { AREAS } from '../../domain/test/Area';
+import type { MatriculadoQuestion, QuestionType } from '../../domain/test/MatriculadoQuestion';
 import type { CourseId } from '../../domain/test/TestQuestion';
 
 function shuffle<T>(arr: T[]): T[] {
@@ -12,12 +13,25 @@ function shuffle<T>(arr: T[]): T[] {
   return copy;
 }
 
-export function selectMatriculadoQuestions(cursoId: CourseId): MatriculadoQuestion[] {
-  const generic = MATRICULADO_QUESTION_BANK.filter((q) => q.categoria !== 'Área');
-  const areaSpecific = MATRICULADO_QUESTION_BANK.filter(
-    (q) => q.areaId && AREAS[q.areaId].cursoId === cursoId
-  );
+function getCourseIdForQuestion(q: MatriculadoQuestion): CourseId | null {
+  switch (q.type) {
+    case 'likert':
+    case 'swipe':
+      return q.areaId ? AREAS[q.areaId].cursoId : null; // sem areaId = genérica (Bloco A/B), fora do filtro por curso
+    case 'scenario':
+      return q.opcoes[0] ? AREAS[q.opcoes[0].areaId].cursoId : null;
+    case 'ranking':
+      return q.itens[0] ? AREAS[q.itens[0].areaId].cursoId : null;
+  }
+}
 
-  // banco por área é pequeno (1-2 itens/área) — usa-se tudo, só o genérico (A/B) é embaralhado na ordem
+export function selectMatriculadoQuestions(cursoId: CourseId, formatFilter?: QuestionType[]): MatriculadoQuestion[] {
+  const generic = MATRICULADO_QUESTION_BANK.filter((q) => getCourseIdForQuestion(q) === null);
+  let areaSpecific = MATRICULADO_QUESTION_BANK.filter((q) => getCourseIdForQuestion(q) === cursoId);
+
+  if (formatFilter && formatFilter.length > 0) {
+    areaSpecific = areaSpecific.filter((q) => formatFilter.includes(q.type));
+  }
+
   return shuffle([...generic, ...areaSpecific]);
 }

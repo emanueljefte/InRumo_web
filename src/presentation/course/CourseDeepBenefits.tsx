@@ -51,7 +51,7 @@ export function CourseDeepBenefits({ courseId }: { courseId: CourseId }) {
       </div>
 
       {/* Testemunho */}
-      <div className="relative bg-gradient-to-br from-primary/5 via-primary/10 to-transparent rounded-3xl border border-primary/15 p-6 sm:p-8 overflow-hidden">
+      <div className="relative bg-linear-to-br from-primary/5 via-primary/10 to-transparent rounded-3xl border border-primary/15 p-6 sm:p-8 overflow-hidden">
         <Quote className="absolute -right-2 -bottom-2 w-24 h-24 text-primary/10 pointer-events-none" />
         <p className="font-body text-xs sm:text-sm text-[#1a1b22] italic leading-relaxed relative z-10">
           "{benefits.testimonial}"

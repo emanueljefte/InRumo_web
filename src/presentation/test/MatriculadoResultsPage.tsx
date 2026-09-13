@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Sparkles,
@@ -36,20 +36,24 @@ export default function MatriculadoResultsPage() {
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  // Ref para garantir que a persistência só seja executada uma vez por sessão/resultado
+  const hasAttemptedSave = useRef(false);
+
   useEffect(() => {
-    const currentSession = session?.user
+    const userId = session?.user?.id;
 
-    if (!result || !currentSession?.id || status !== 'idle') return;
+    // Se não houver resultado, utilizador ou se já executamos a gravação, ignora
+    if (!result || !userId || hasAttemptedSave.current) return;
 
-    const validUserId: string = currentSession.id
     let isMounted = true;
+    hasAttemptedSave.current = true;
 
     async function persistResult() {
-      if (isMounted) setStatus('saving');
+      setStatus('saving');
       
       try {
         await testRepository.saveResult({
-          userId: validUserId,
+          userId: userId!,
           recommendedAreaId: result!.recommended.areaId,
           isTie: isAreaTie(result!),
           runnerUpAreaId: result!.runnerUp?.areaId ?? null,
@@ -77,7 +81,7 @@ export default function MatriculadoResultsPage() {
     return () => {
       isMounted = false;
     };
-  }, [result, session?.user, status, testRepository]);
+  }, [result, session?.user?.id, testRepository]);
 
   // Ecrã de Sem Resultado
   if (!result) {
@@ -202,7 +206,7 @@ export default function MatriculadoResultsPage() {
                   <div className="w-full bg-surface-container-high h-2.5 rounded-full overflow-hidden p-0.5">
                     <div
                       className={`h-full rounded-full transition-all duration-700 ${
-                        isTop ? 'bg-primary' : 'bg-on-surface-variant/40'
+                        isTop ? 'bg-primary' : 'bg-border'
                       }`}
                       style={{ width: `${Math.max(score.percentage, 4)}%` }}
                     />

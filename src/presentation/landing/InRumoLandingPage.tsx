@@ -25,18 +25,35 @@ import {
   Sliders,
   Brain,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import FaqSection from '../../components/FaqSection';
 import { FaFacebook, FaInstagram, FaLinkedin } from 'react-icons/fa';
+import { useAuth } from '../../application/auth/useAuth';
+import { getHomeRoute } from '../../application/auth/getHomeRoute';
 
 export default function InRumoLandingPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { session, profile } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const heroContentRef = useRef<HTMLDivElement>(null);
   const heroCardRef = useRef<HTMLDivElement>(null);
   const floatingBadgeRef = useRef<HTMLDivElement>(null);
   const logosRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!location.hash) return;
+
+    const id = location.hash.replace('#', '');
+    // pequeno delay para garantir que o conteúdo já está montado no DOM
+    const timeout = setTimeout(() => {
+      const el = document.getElementById(id);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+
+    return () => clearTimeout(timeout);
+  }, [location.hash]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -133,32 +150,44 @@ export default function InRumoLandingPage() {
           </nav>
 
           {/* Ações Desktop */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => navigate('/login')}
-              className="hidden md:block text-sm font-medium text-on-surface-variant hover:text-primary px-3 py-2 transition-colors cursor-pointer"
-            >
-              Entrar
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/test')}
-              className="bg-primary text-on-primary text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-primary/90 transition-all duration-200 shadow-sm hover:shadow-md active:scale-95 cursor-pointer flex items-center gap-2"
-            >
-              <span>Começar Teste</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
 
-            {/* Botão Menu Mobile */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-2 rounded-lg text-on-surface hover:bg-surface-container transition-colors"
-              aria-label="Abrir menu"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
+          <div className="flex items-center gap-4">
+            {session ? (
+              <>
+                <span className="hidden md:block font-body-sm text-xs text-on-surface-variant">{profile?.nome}</span>
+                <button onClick={() => navigate(getHomeRoute(profile))} className="bg-primary-container text-on-primary-container font-body-sm font-semibold px-5 py-2 rounded-lg hover:bg-primary hover:text-on-primary transition-all duration-200 shadow-sm active:scale-95 cursor-pointer">
+                  Voltar ao painel
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => navigate('/login')}
+                  className="hidden md:block text-sm font-medium text-on-surface-variant hover:text-primary px-3 py-2 transition-colors cursor-pointer"
+                >
+                  Entrar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/test')}
+                  className="bg-primary text-on-primary text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-primary/90 transition-all duration-200 shadow-sm hover:shadow-md active:scale-95 cursor-pointer flex items-center gap-2"
+                >
+                  <span>Começar Teste</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+
+                {/* Botão Menu Mobile */}
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(true)}
+                  className="md:hidden p-2 rounded-lg text-on-surface hover:bg-surface-container transition-colors"
+                  aria-label="Abrir menu"
+                >
+                  <Menu className="w-6 h-6" />
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -212,29 +241,37 @@ export default function InRumoLandingPage() {
               </nav>
             </div>
 
-            <div className="space-y-3 pt-6 border-t border-outline-variant/60">
-              <button
-                type="button"
-                onClick={() => { setMobileMenuOpen(false); navigate('/login'); }}
-                className="w-full text-center text-sm font-medium text-on-surface border border-outline-variant px-4 py-2.5 rounded-xl hover:bg-surface-container transition-colors"
-              >
-                Entrar na Conta
-              </button>
-              <button
-                type="button"
-                onClick={() => { setMobileMenuOpen(false); navigate('/register/matriculado'); }}
-                className="w-full text-center text-xs font-semibold text-primary hover:underline py-1"
-              >
-                Já sou aluno matriculado
-              </button>
-              <button
-                type="button"
-                onClick={() => { setMobileMenuOpen(false); navigate('/test'); }}
-                className="w-full bg-primary text-on-primary text-sm font-semibold px-5 py-3 rounded-xl shadow-xs hover:bg-primary/90 transition-all flex justify-center items-center gap-2"
-              >
-                <span>Começar Teste Grátis</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+            <div className="mt-auto flex flex-col gap-3">
+              {session ? (
+                <button onClick={() => { setMobileMenuOpen(false); navigate(getHomeRoute(profile)); }} className="bg-primary-container text-on-primary-container font-semibold px-5 py-3 rounded-lg">
+                  Voltar ao painel
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => { setMobileMenuOpen(false); navigate('/login'); }}
+                    className="w-full text-center text-sm font-medium text-on-surface border border-outline-variant px-4 py-2.5 rounded-xl hover:bg-surface-container transition-colors"
+                  >
+                    Entrar na Conta
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setMobileMenuOpen(false); navigate('/register/matriculado'); }}
+                    className="w-full text-center text-xs font-semibold text-primary hover:underline py-1"
+                  >
+                    Já sou aluno matriculado
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setMobileMenuOpen(false); navigate('/test'); }}
+                    className="w-full bg-primary text-on-primary text-sm font-semibold px-5 py-3 rounded-xl shadow-xs hover:bg-primary/90 transition-all flex justify-center items-center gap-2"
+                  >
+                    <span>Começar Teste Grátis</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -407,7 +444,7 @@ export default function InRumoLandingPage() {
         </section>
 
         {/* --- SECÇÃO: SOBRE O INSTIC --- */}
-        <section id="sobre" className="py-24 bg-surface-container-lowest border-t border-outline-variant/40 relative overflow-hidden">
+        <section id="sobre" className="py-24 px-3 scroll-mt-20 bg-surface-container-lowest border-t border-outline-variant/40 relative overflow-hidden">
           {/* Glow sutil de fundo */}
           <div className="absolute top-1/2 left-0 -translate-y-1/2 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -478,7 +515,7 @@ export default function InRumoLandingPage() {
         </section>
 
         {/* --- SECÇÃO: CATÁLOGO DE CURSOS --- */}
-        <section id="cursos" className="py-24 bg-background relative">
+        <section id="cursos" className="py-24 px-3 scroll-mt-20 bg-background relative">
           <div className="max-w-container-max mx-auto px-gutter md:px-stack-lg">
 
             {/* Cabeçalho da Secção */}
@@ -527,12 +564,12 @@ export default function InRumoLandingPage() {
                   className="group relative bg-surface-container-lowest border border-outline-variant/60 rounded-3xl p-7 hover:border-primary/50 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between overflow-hidden"
                 >
                   {/* Subtle Hover Gradient Background */}
-                  <div className={`absolute top-0 left-0 right-0 h-32 bg-gradient-to-b ${course.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
+                  <div className={`absolute top-0 left-0 right-0 h-32 bg-linear-to-b ${course.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
 
                   <div className="relative z-10 space-y-4">
                     {/* Header do Card (Ícone + Tag) */}
                     <div className="flex items-center justify-between">
-                      <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-on-primary transition-all duration-300 shadow-sm">
+                      <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-surface transition-all duration-300 shadow-sm">
                         <course.icon className="w-6 h-6" />
                       </div>
                       <span className="text-[11px] font-bold text-on-surface-variant/80 uppercase tracking-wider bg-surface-container-high px-2.5 py-1 rounded-full border border-outline-variant/30">
@@ -554,7 +591,7 @@ export default function InRumoLandingPage() {
                   {/* Footer do Card (Link com Seta Animada) */}
                   <div className="pt-6 mt-6 border-t border-outline-variant/30 flex items-center justify-between text-xs font-semibold text-primary relative z-10">
                     <span>Explorar Matriz Curricular</span>
-                    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-on-primary transition-all duration-300">
+                    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-surface transition-all duration-300">
                       <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
                     </div>
                   </div>
@@ -563,7 +600,7 @@ export default function InRumoLandingPage() {
             </div>
 
             {/* Botão Secundário de Ação */}
-            <div className="text-center mt-12">
+            {/* <div className="text-center mt-12">
               <button
                 onClick={() => navigate('/course')}
                 className="inline-flex items-center gap-2 font-medium text-xs sm:text-sm text-on-surface bg-surface-container-low border border-outline-variant/70 hover:border-primary hover:bg-surface-container px-6 py-3.5 rounded-xl transition-all duration-200 shadow-sm cursor-pointer active:scale-95"
@@ -571,13 +608,13 @@ export default function InRumoLandingPage() {
                 <span>Ver matrizes curriculares completas</span>
                 <ArrowRight className="w-4 h-4 text-on-surface-variant" />
               </button>
-            </div>
+            </div> */}
 
           </div>
         </section>
 
         {/* --- SECÇÃO: PROVA INSTITUCIONAL / ECOSSISTEMA --- */}
-        <section className="py-16 bg-surface-container-lowest border-t border-b border-outline-variant/40 relative overflow-hidden">
+        <section className="py-16 px-3 bg-surface-container-lowest border-t border-b border-outline-variant/40 relative overflow-hidden">
           <div className="max-w-container-max mx-auto px-gutter md:px-stack-lg text-center relative z-10">
 
             <p className="font-body-sm text-[11px] sm:text-xs font-bold text-on-surface-variant/80 uppercase tracking-widest mb-10">
@@ -620,11 +657,11 @@ export default function InRumoLandingPage() {
         </section>
 
         {/* --- SECÇÃO: CALL TO ACTION (BANNER HERO) --- */}
-        <section className="py-20 bg-background relative overflow-hidden">
+        <section className="py-20 px-3 bg-background relative overflow-hidden">
           <div className="max-w-container-max mx-auto px-gutter md:px-stack-lg">
 
             {/* Banner Container com Efeito Glow */}
-            <div className="relative rounded-3xl bg-gradient-to-br from-primary/10 via-surface-container-lowest to-tertiary/10 border border-outline-variant/60 p-8 sm:p-12 md:p-16 text-center shadow-2xl overflow-hidden">
+            <div className="relative rounded-3xl bg-linear-to-br from-primary/10 via-surface-container-lowest to-tertiary/10 border border-outline-variant/60 p-8 sm:p-12 md:p-16 text-center shadow-2xl overflow-hidden">
 
               {/* Luzes / Blur de Fundo Decorativo */}
               <div className="absolute top-0 right-1/4 w-72 h-72 bg-primary/15 rounded-full blur-3xl pointer-events-none" />
@@ -672,7 +709,7 @@ export default function InRumoLandingPage() {
         </section>
 
         {/* --- SECÇÃO: ESTUDANTES MATRICULADOS --- */}
-        <section id="matriculados" className="py-24 bg-surface-container-low/40 border-t border-b border-outline-variant/40 relative overflow-hidden">
+        <section id="matriculados" className="py-24 px-3 scroll-mt-20 bg-surface-container-low/40 border-t border-b border-outline-variant/40 relative overflow-hidden">
           {/* Glow decorativo suave */}
           <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-tertiary/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -688,7 +725,7 @@ export default function InRumoLandingPage() {
 
                 <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-on-surface tracking-tight leading-tight">
                   Já estás matriculado? <br className="hidden sm:inline" />
-                  <span className="text-tertiary">O InRumo também é para ti.</span>
+                  <span className="text-primary">O InRumo também é para ti.</span>
                 </h2>
 
                 <p className="font-body-md text-on-surface-variant leading-relaxed text-sm sm:text-base max-w-xl">
@@ -715,7 +752,7 @@ export default function InRumoLandingPage() {
                 <div className="pt-4">
                   <button
                     onClick={() => navigate('/register/matriculado')}
-                    className="bg-tertiary text-on-tertiary font-bold text-sm px-7 py-3.5 rounded-2xl hover:bg-tertiary/90 transition-all duration-300 shadow-md hover:shadow-tertiary/20 inline-flex items-center gap-2.5 group active:scale-95 cursor-pointer"
+                    className="bg-tertiary text-on-tertiary font-bold text-sm px-7 py-3.5 rounded-2xl hover:bg-primary/90 transition-all duration-300 shadow-md hover:shadow-tertiary/20 inline-flex items-center gap-2.5 group active:scale-95 cursor-pointer"
                   >
                     <span>Sou Aluno do INSTIC — Entrar Agora</span>
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -772,7 +809,7 @@ export default function InRumoLandingPage() {
         </section>
 
         {/* --- SECÇÃO: METODOLOGIA (ALINHADA AO TESTE ADAPTATIVO) --- */}
-        <section id="metodologia" className="py-24 bg-background relative">
+        <section id="metodologia" className="py-24 px-3 scroll-mt-20 bg-background relative">
           <div className="max-w-container-max mx-auto px-gutter md:px-stack-lg">
 
             {/* Cabeçalho */}
@@ -792,7 +829,7 @@ export default function InRumoLandingPage() {
             </div>
 
             {/* Cards de Metodologia */}
-            <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
+            <div className="grid md:grid-cols-3 gap-4 sm:gap-6">
               {[
                 {
                   title: 'Algoritmo Adaptativo CAT',
@@ -853,7 +890,7 @@ export default function InRumoLandingPage() {
 
       {/* Footer */}
       {/* --- SECÇÃO: RODAPÉ (FOOTER) --- */}
-      <footer className="bg-surface-container-lowest border-t border-outline-variant/40 relative overflow-hidden">
+      <footer className="px-3 bg-surface-container-lowest border-t border-outline-variant/40 relative overflow-hidden">
         {/* Gradiente de luz subtil no fundo */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-32 bg-primary/5 blur-3xl pointer-events-none" />
 
