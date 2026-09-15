@@ -24,6 +24,7 @@ export type AuthContextValue = {
   profile: Profile | null;
   initializing: boolean;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 };
 
-export const AuthContext = createContext<AuthContextValue>({ session: null, profile: null, initializing: true, signOut: async () => {}, });
+export const AuthContext = createContext<AuthContextValue>({ session: null, profile: null, initializing: true, signOut: async () => {}, refreshProfile: async () => {} });

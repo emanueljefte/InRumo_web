@@ -1,19 +1,13 @@
-Melhorar no Loading do Sistema
+Melhorar o Loading do Sistema
+Realtime funcionando?
 
 Candidato
--Empate, como realizar o desempate
 -Onde pego o AvatarUrl exata do Usuário?
 -Ao fazeer o teste e ao usar Enter para enviar a resposta, o item selecionado não é resetado para não marcado
-
-Matriculado
--Empate tecnico
--Resolver problemas ao agendar sessão
--Os arquivos das sessões são uploados pelo proprio matriculado
 
 Admin
 -Reload comprovativos
 -Ao importar um outro excel, o que acontece com os dados antes importados? Caso tenham informações importantes repetidas? (numero de processo)
 
-
-RegisterMatriculado
--complete-enrollment, parece que guarda rejeções anteriores e quando peço para tentar novamente, preencho as informações envio e automaticamente já cai no rejected, tenho de fazer 'tentar novamente' para puder agora assim entrar no pending. Mas seja a requisição que ele automaticamente ja se deu um rejected e anova que faço depois dela, estão la no painel do admin a espera de resposta, dou acepted para uma delas e ela entra no painel do matriculado e faço tudo normalmente, e a outra requisição dei um rejected sem modificações até eu deslogar e tentar logar de novo, voltei a tela rejected e no BD não encontro registro daquela conta.
+NotificationBell
+-Esse componente sabe diferenciar de matriculado, orientador?

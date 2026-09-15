@@ -78,9 +78,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await authRepository.signOut();
   };
 
+  const refreshProfile = async () => {
+  if (!session) return;
+  await loadProfile(session.user.id); // já tens loadProfile definida — reaproveita
+};
 
   return (
-    <AuthContext.Provider value={{ session, profile, initializing, signOut }}>
+    <AuthContext.Provider value={{ session, profile, initializing, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

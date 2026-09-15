@@ -17,6 +17,7 @@ export default function SchedulePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modo, setModo] = useState<'presencial' | 'online'>('presencial');
   const [local, setLocal] = useState('');
+  const [bookingError, setBookingError] = useState<string | null>(null);
 
   useEffect(() => {
     const userId = session?.user?.id;
@@ -66,41 +67,16 @@ export default function SchedulePage() {
     if (!booking || typeof userId !== 'string') return;
 
     setIsSubmitting(true);
+    setBookingError(null);
     try {
-      await scheduleRepository.createSession(
-        userId,
-        booking.orientadorId,
-        booking.dataHora.toISOString(),
-        modo,
-        local || undefined
-      );
-
-      setMySessions((prev) => [
-        ...prev,
-        {
-          id: 'temp-' + Date.now(),
-          matriculadoId: userId,
-          orientadorId: booking.orientadorId,
-          dataHora: booking.dataHora.toISOString(),
-          estado: 'marcada',
-          modo: modo,
-          local: local,
-          notasOrientador: null,
-          motivoCancelamento: null,
-        },
-      ]);
-
-      setFreeSlots((prev) =>
-        prev.filter(
-          (s) =>
-            s.dataHora.getTime() !== booking.dataHora.getTime() ||
-            s.orientadorId !== booking.orientadorId
-        )
-      );
+      const newSession = await scheduleRepository.createSession(userId, booking.orientadorId, booking.dataHora.toISOString(), modo, local || undefined);
+      setMySessions((prev) => [...prev, newSession]);
+      setFreeSlots((prev) => prev.filter((s) => s.dataHora.getTime() !== booking.dataHora.getTime() || s.orientadorId !== booking.orientadorId));
       setBooking(null);
+      setModo('presencial');
+      setLocal('');
     } catch (err) {
-      console.log(err instanceof Error ? err.message : 'Não foi possível marcar a sessão.');
-      setBooking(null);
+      setBookingError(err instanceof Error ? err.message : 'Não foi possível marcar a sessão.');
     } finally {
       setIsSubmitting(false);
     }
@@ -245,7 +221,6 @@ export default function SchedulePage() {
       </section>
 
       {/* Modal de Confirmação */}
-      // SchedulePage.tsx — modal de confirmação, adicionar escolha de modo/local
       {booking && (
         <div className="fixed inset-0 z-60 bg-on-surface/40 flex items-center justify-center p-4">
           <div className="bg-surface-container-lowest rounded-2xl p-6 max-w-sm w-full space-y-4">
@@ -253,7 +228,7 @@ export default function SchedulePage() {
             <p className="font-body-sm text-on-surface-variant">
               {orientadorNome(booking.orientadorId)} — {booking.dataHora.toLocaleString('pt-PT', { weekday: 'long', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
             </p>
-
+            {bookingError && <p className="text-xs text-error">{bookingError}</p>}
             <div className="flex gap-2">
               <button onClick={() => setModo('presencial')} className={`flex-1 py-2 rounded-lg text-xs font-semibold border ${modo === 'presencial' ? 'bg-primary text-white border-primary' : 'border-outline-variant text-on-surface-variant'}`}>
                 Presencial
@@ -271,8 +246,16 @@ export default function SchedulePage() {
             />
 
             <div className="flex gap-3 justify-end">
-              <button onClick={() => setBooking(null)} className="px-4 py-2 text-sm font-medium">Cancelar</button>
-              <button onClick={handleConfirm} className="px-4 py-2 text-sm font-semibold bg-primary-container text-on-primary-container rounded-lg">Confirmar</button>
+              <button onClick={() => {
+                setBooking(null);
+                setBookingError(null);
+                setModo('presencial');
+                setLocal('');
+              }} className="px-4 py-2 text-sm font-medium">Cancelar</button>
+              <button onClick={handleConfirm} disabled={isSubmitting}
+                className="px-4 py-2 text-sm font-semibold bg-primary-container text-on-primary-container rounded-lg disabled:opacity-50">
+                {isSubmitting ? 'A marcar...' : 'Confirmar'}
+              </button>
             </div>
           </div>
         </div>
