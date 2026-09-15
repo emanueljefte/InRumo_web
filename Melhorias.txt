@@ -5,6 +5,9 @@ Candidato
 -Onde pego o AvatarUrl exata do Usuário?
 -Ao fazeer o teste e ao usar Enter para enviar a resposta, o item selecionado não é resetado para não marcado
 
+Matriculado
+-Quando o orientador cancela uma sessão, no matriculado tamber cancelar
+
 Admin
 -Reload comprovativos
 -Ao importar um outro excel, o que acontece com os dados antes importados? Caso tenham informações importantes repetidas? (numero de processo)
