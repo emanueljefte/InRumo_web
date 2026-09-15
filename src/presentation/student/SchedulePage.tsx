@@ -15,6 +15,8 @@ export default function SchedulePage() {
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState<FreeSlot | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [modo, setModo] = useState<'presencial' | 'online'>('presencial');
+  const [local, setLocal] = useState('');
 
   useEffect(() => {
     const userId = session?.user?.id;
@@ -32,7 +34,7 @@ export default function SchedulePage() {
         const availability = await scheduleRepository.getAvailability();
         const now = new Date();
         const in7days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-        
+
         const existing = await scheduleRepository.getUpcomingSessions(
           orientadoresList.map((o) => o.id),
           now,
@@ -68,7 +70,9 @@ export default function SchedulePage() {
       await scheduleRepository.createSession(
         userId,
         booking.orientadorId,
-        booking.dataHora.toISOString()
+        booking.dataHora.toISOString(),
+        modo,
+        local || undefined
       );
 
       setMySessions((prev) => [
@@ -79,6 +83,10 @@ export default function SchedulePage() {
           orientadorId: booking.orientadorId,
           dataHora: booking.dataHora.toISOString(),
           estado: 'marcada',
+          modo: modo,
+          local: local,
+          notasOrientador: null,
+          motivoCancelamento: null,
         },
       ]);
 
@@ -91,8 +99,8 @@ export default function SchedulePage() {
       );
       setBooking(null);
     } catch (err) {
-    console.log(err instanceof Error ? err.message : 'Não foi possível marcar a sessão.'); 
-    setBooking(null);
+      console.log(err instanceof Error ? err.message : 'Não foi possível marcar a sessão.');
+      setBooking(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -237,57 +245,34 @@ export default function SchedulePage() {
       </section>
 
       {/* Modal de Confirmação */}
+      // SchedulePage.tsx — modal de confirmação, adicionar escolha de modo/local
       {booking && (
-        <div
-          className="fixed inset-0 z-50 bg-on-surface/40 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn"
-          onClick={() => !isSubmitting && setBooking(null)}
-        >
-          <div
-            className="bg-surface-container-lowest rounded-3xl p-6 sm:p-7 max-w-md w-full space-y-6 shadow-2xl border border-outline-variant/60"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="space-y-2">
-              <h3 className="font-heading text-lg font-bold text-on-surface">
-                Confirmar Agendamento
-              </h3>
-              <p className="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
-                Estás prestes a marcar a tua sessão com{' '}
-                <strong className="text-on-surface">{orientadorNome(booking.orientadorId)}</strong> no seguinte horário:
-              </p>
+        <div className="fixed inset-0 z-60 bg-on-surface/40 flex items-center justify-center p-4">
+          <div className="bg-surface-container-lowest rounded-2xl p-6 max-w-sm w-full space-y-4">
+            <p className="font-heading text-headline-sm text-on-surface">Confirmar marcação?</p>
+            <p className="font-body-sm text-on-surface-variant">
+              {orientadorNome(booking.orientadorId)} — {booking.dataHora.toLocaleString('pt-PT', { weekday: 'long', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+            </p>
+
+            <div className="flex gap-2">
+              <button onClick={() => setModo('presencial')} className={`flex-1 py-2 rounded-lg text-xs font-semibold border ${modo === 'presencial' ? 'bg-primary text-white border-primary' : 'border-outline-variant text-on-surface-variant'}`}>
+                Presencial
+              </button>
+              <button onClick={() => setModo('online')} className={`flex-1 py-2 rounded-lg text-xs font-semibold border ${modo === 'online' ? 'bg-primary text-white border-primary' : 'border-outline-variant text-on-surface-variant'}`}>
+                Online
+              </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/40 flex items-center gap-3">
-              <Calendar className="w-5 h-5 text-primary shrink-0" />
-              <span className="text-xs sm:text-sm font-semibold text-on-surface">
-                {booking.dataHora.toLocaleString('pt-PT', {
-                  weekday: 'long',
-                  day: '2-digit',
-                  month: 'long',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </span>
-            </div>
+            <input
+              value={local}
+              onChange={(e) => setLocal(e.target.value)}
+              placeholder={modo === 'presencial' ? 'Sala (opcional, a confirmar pelo orientador)' : 'Link da reunião (opcional, a confirmar pelo orientador)'}
+              className="w-full border border-outline-variant rounded-lg px-3 py-2 text-xs"
+            />
 
-            <div className="flex gap-3 justify-end pt-2">
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={() => setBooking(null)}
-                className="px-5 py-2.5 text-xs sm:text-sm font-semibold text-on-surface-variant hover:text-on-surface rounded-xl transition-all disabled:opacity-50 cursor-pointer"
-              >
-                Cancelar
-              </button>
-
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={handleConfirm}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-xs sm:text-sm font-bold bg-primary hover:bg-primary/90 text-on-primary rounded-xl transition-all shadow-xs disabled:opacity-50 cursor-pointer"
-              >
-                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                <span>{isSubmitting ? 'A agendar...' : 'Confirmar Vaga'}</span>
-              </button>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setBooking(null)} className="px-4 py-2 text-sm font-medium">Cancelar</button>
+              <button onClick={handleConfirm} className="px-4 py-2 text-sm font-semibold bg-primary-container text-on-primary-container rounded-lg">Confirmar</button>
             </div>
           </div>
         </div>

@@ -41,6 +41,8 @@ import OrientadoresPage from './presentation/admin/OrientadorPage';
 import StudentProfilePage from './presentation/student/Profile';
 import TestFormatSelectionPage from './presentation/test/TestFormatSelectionPage';
 import { RequireTestCompleted } from './presentation/candidate/RequireTestCompleted';
+import { RedirectIfAuthenticated } from './presentation/auth/RedirectIfAuthenticated';
+import EnrollmentRejectedPage from './presentation/auth/EnrollmentRejectedPage';
 
 
 function ProtectedRoute({ children, allow }: { children: React.ReactNode; allow?: 'candidate' | 'matriculado' | 'orientador' | 'administrador' }) {
@@ -68,14 +70,14 @@ export default function App() {
           <Route path="/landingpage" element={<InRumoLandingPage />} />
           <Route path="/test" element={<VocationalTestPage />} />
           <Route path="/results" element={<ResultsPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterChoicePage />} />
-          <Route path="/register/candidate" element={<RegisterPage />} />
+          <Route path="/login" element={<RedirectIfAuthenticated><LoginPage /></RedirectIfAuthenticated>} />
+          <Route path="/register" element={<RedirectIfAuthenticated><RegisterChoicePage /></RedirectIfAuthenticated>} />
+          <Route path="/register/candidate" element={<RedirectIfAuthenticated><RegisterPage /></RedirectIfAuthenticated>} />
           <Route path="/register/matriculado" element={<RegisterMatriculadoPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/forgot-password" element={<RedirectIfAuthenticated><ForgotPasswordPage /></RedirectIfAuthenticated>} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/pending-verification" element={<PendingVerificationPage />} />
-
+          <Route path="/enrollment-rejected" element={<ProtectedRoute><EnrollmentRejectedPage /></ProtectedRoute>} />
           <Route element={<PublicLayout />}>
             <Route path="/course" element={<CoursesCatalogPage />} />
             <Route path="/course/:id" element={<CourseDetailPage />} />
@@ -87,7 +89,7 @@ export default function App() {
             <Route index element={<CandidateHomePage />} />
             <Route path="results" element={<CandidateResultsPage />} />
 
-            <Route path="chat" element={<RequireTestCompleted><ChatPage allowEscalation={false} /></RequireTestCompleted>} /> 
+            <Route path="chat" element={<RequireTestCompleted><ChatPage allowEscalation={false} /></RequireTestCompleted>} />
             <Route path="profile" element={<CandidateProfilePage />} />
           </Route>
 

@@ -7,6 +7,7 @@ export class SupabaseCourseRepository implements CourseRepository {
   async getCourse(id: CourseId): Promise<Course> {
     const { data, error } = await supabase.from('courses').select('*').eq('id', id).single();
     if (error) throw error;
+    // if (!data) return null;
     return {
       id: data.id,
       name: data.name,

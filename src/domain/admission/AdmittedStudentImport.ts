@@ -5,6 +5,9 @@ export type AdmittedStudentRow = {
   nome: string;
   cursoId: CourseId;
   dataNascimento?: string;
+  telefone?: string;
+  turno?: string;
+  anoAcademico?: string;
 };
 
 export type AdmissionImportRepository = {

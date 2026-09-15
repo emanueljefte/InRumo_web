@@ -42,7 +42,7 @@ export async function completeMatriculadoVerification(
 ): Promise<RegisterMatriculadoResult> {
   const verification = await admissionRepo.verify(input.numeroProcesso);
 
-  console.log(verification);
+  console.log(input);
   
   if (verification.matched && normalizeName(verification.nome) === normalizeName(input.nome)) {
    try {

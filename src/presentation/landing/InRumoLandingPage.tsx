@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import {
   GraduationCap,
@@ -30,6 +30,8 @@ import FaqSection from '../../components/FaqSection';
 import { FaFacebook, FaInstagram, FaLinkedin } from 'react-icons/fa';
 import { useAuth } from '../../application/auth/useAuth';
 import { getHomeRoute } from '../../application/auth/getHomeRoute';
+import { SupabaseTestRepository } from '../../data/supabase/SupabaseTestRepository';
+import { useTestResult } from '../../application/test/useTestResult';
 
 export default function InRumoLandingPage() {
   const navigate = useNavigate();
@@ -41,6 +43,8 @@ export default function InRumoLandingPage() {
   const heroCardRef = useRef<HTMLDivElement>(null);
   const floatingBadgeRef = useRef<HTMLDivElement>(null);
   const logosRef = useRef<HTMLDivElement>(null);
+  const testRepository = useMemo(() => new SupabaseTestRepository(), []);
+  const { result } = useTestResult(testRepository); // só relevante se session existir
 
   useEffect(() => {
     if (!location.hash) return;
@@ -113,169 +117,263 @@ export default function InRumoLandingPage() {
     <div className="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col selection:bg-primary-container selection:text-on-primary-container">
 
       {/* TopNavBar */}
-      <header
-        ref={headerRef}
-        className="bg-background/80 backdrop-blur-xl border-b border-outline-variant/40 sticky top-0 z-50 transition-all"
-      >
-        <div className="max-w-container-max mx-auto px-4 sm:px-6 md:px-8 flex justify-between items-center h-20">
+      <>
+        <header
+          ref={headerRef}
+          className="bg-background/80 backdrop-blur-xl border-b border-outline-variant/40 sticky top-0 z-50 transition-all"
+        >
+          <div className="max-w-container-max mx-auto px-4 sm:px-6 md:px-8 flex justify-between items-center h-20">
 
-          {/* Logo */}
-          <a href="/" className="flex items-center gap-2 group transition-transform active:scale-95">
-            <img src="/favicon_2.png" alt="Logo do InRumo" className="h-9 w-auto object-contain" />
-            <span className="font-heading font-bold text-xl tracking-tight text-on-surface">
-              In<span className="text-primary">Rumo</span>
-            </span>
-          </a>
-
-          {/* Navegação Desktop */}
-          <nav className="hidden md:flex items-center gap-8">
-            <a
-              className="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors py-1 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-primary hover:after:w-full after:transition-all"
-              href="#cursos"
-            >
-              Cursos
+            {/* Logo */}
+            <a href="/" className="flex items-center gap-2 group transition-transform active:scale-95">
+              <img src="/favicon_2.png" alt="Logo do InRumo" className="h-9 w-auto object-contain" />
+              <span className="font-heading font-bold text-xl tracking-tight text-on-surface">
+                In<span className="text-primary">Rumo</span>
+              </span>
             </a>
-            <a
-              className="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors py-1 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-primary hover:after:w-full after:transition-all"
-              href="#metodologia"
-            >
-              Metodologia
-            </a>
-            <a
-              className="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors py-1 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-primary hover:after:w-full after:transition-all"
-              href="#sobre"
-            >
-              O INSTIC
-            </a>
-          </nav>
 
-          {/* Ações Desktop */}
+            {/* Navegação Desktop */}
+            <nav className="hidden md:flex items-center gap-8">
+              <a
+                className="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors py-1 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-primary hover:after:w-full after:transition-all"
+                href="#cursos"
+              >
+                Cursos
+              </a>
+              <a
+                className="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors py-1 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-primary hover:after:w-full after:transition-all"
+                href="#metodologia"
+              >
+                Metodologia
+              </a>
+              <a
+                className="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors py-1 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-primary hover:after:w-full after:transition-all"
+                href="#sobre"
+              >
+                O INSTIC
+              </a>
+            </nav>
 
-          <div className="flex items-center gap-4">
-            {session ? (
-              <>
-                <span className="hidden md:block font-body-sm text-xs text-on-surface-variant">{profile?.nome}</span>
-                <button onClick={() => navigate(getHomeRoute(profile))} className="bg-primary-container text-on-primary-container font-body-sm font-semibold px-5 py-2 rounded-lg hover:bg-primary hover:text-on-primary transition-all duration-200 shadow-sm active:scale-95 cursor-pointer">
-                  Voltar ao painel
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => navigate('/login')}
-                  className="hidden md:block text-sm font-medium text-on-surface-variant hover:text-primary px-3 py-2 transition-colors cursor-pointer"
-                >
-                  Entrar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate('/test')}
-                  className="bg-primary text-on-primary text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-primary/90 transition-all duration-200 shadow-sm hover:shadow-md active:scale-95 cursor-pointer flex items-center gap-2"
-                >
-                  <span>Começar Teste</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-
-                {/* Botão Menu Mobile */}
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(true)}
-                  className="md:hidden p-2 rounded-lg text-on-surface hover:bg-surface-container transition-colors"
-                  aria-label="Abrir menu"
-                >
-                  <Menu className="w-6 h-6" />
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Drawer Menu Mobile */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div
-            className="absolute inset-0 bg-on-surface/40 backdrop-blur-xs transition-opacity"
-            onClick={() => setMobileMenuOpen(false)}
-          />
-          <div className="absolute right-0 top-0 h-full w-80 bg-surface-container-lowest shadow-2xl p-6 flex flex-col justify-between z-10 animate-in slide-in-from-right duration-300">
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <img src="/favicon_2.png" alt="Logo do InRumo" className="h-8" />
-                  <span className="font-heading font-bold text-lg">InRumo</span>
+            {/* Ações Desktop & Menu Mobile Trigger */}
+            <div className="flex items-center gap-4">
+              {session ? (
+                <div className="flex items-center gap-4">
+                  <span className="hidden md:block font-body-sm text-xs font-medium text-on-surface-variant">
+                    {profile?.nome}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => navigate(getHomeRoute(profile))}
+                    className="hidden md:inline-flex items-center justify-center bg-primary-container text-on-primary-container font-body-sm font-semibold px-5 py-2 rounded-xl hover:bg-primary hover:text-on-primary transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
+                  >
+                    Voltar ao painel
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(false)}
-                  aria-label="Fechar menu"
-                  className="p-1.5 text-on-surface-variant hover:text-on-surface rounded-full hover:bg-surface-container transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+              ) : (
+                <div className="hidden md:flex items-center gap-2 sm:gap-3">
+                  {/* Botão Entrar */}
+                  <button
+                    type="button"
+                    onClick={() => navigate('/login')}
+                    className="text-sm font-medium text-on-surface-variant hover:text-primary px-3 py-2 transition-colors cursor-pointer"
+                  >
+                    Entrar
+                  </button>
+
+                  {/* Novo Botão Cadastrar-se */}
+                  <button
+                    type="button"
+                    onClick={() => navigate('/register')}
+                    className="text-sm font-semibold text-primary hover:bg-primary/10 border border-primary/30 px-4 py-2 rounded-xl transition-all cursor-pointer active:scale-95"
+                  >
+                    Cadastrar-se
+                  </button>
+
+                  {result?.recommendedCourseId ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => navigate('/test')}
+                        className="text-xs text-on-surface-variant hover:text-primary transition-colors px-2 py-1"
+                      >
+                        Refazer teste
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/candidate/results')}
+                        className="bg-primary-container text-on-primary-container font-body-sm font-semibold px-5 py-2 rounded-xl hover:bg-primary hover:text-on-primary transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
+                      >
+                        Ver o teu resultado
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => navigate('/test')}
+                      className="bg-primary text-on-primary font-body-sm font-semibold px-5 py-2 rounded-xl hover:bg-primary/90 transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
+                    >
+                      Começar Teste
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Botão Menu Mobile */}
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(true)}
+                className="md:hidden p-2 rounded-xl text-on-surface hover:bg-surface-container transition-colors cursor-pointer active:scale-95"
+                aria-label="Abrir menu"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Drawer Menu Mobile */}
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-50 md:hidden">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-on-surface/40 backdrop-blur-xs transition-opacity"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+
+            {/* Drawer */}
+            <div className="absolute right-0 top-0 h-full w-80 bg-surface-container-lowest shadow-2xl p-6 flex flex-col justify-between z-10 animate-in slide-in-from-right duration-300">
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <img src="/favicon_2.png" alt="Logo do InRumo" className="h-8 w-auto" />
+                    <span className="font-heading font-bold text-lg text-on-surface">InRumo</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMobileMenuOpen(false)}
+                    aria-label="Fechar menu"
+                    className="p-1.5 text-on-surface-variant hover:text-on-surface rounded-full hover:bg-surface-container transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <nav className="flex flex-col gap-1 pt-2">
+                  <a
+                    href="#cursos"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-base font-medium text-on-surface hover:text-primary px-3 py-2.5 rounded-xl hover:bg-surface-container transition-colors"
+                  >
+                    Cursos
+                  </a>
+                  <a
+                    href="#metodologia"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-base font-medium text-on-surface hover:text-primary px-3 py-2.5 rounded-xl hover:bg-surface-container transition-colors"
+                  >
+                    Metodologia
+                  </a>
+                  <a
+                    href="#sobre"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-base font-medium text-on-surface hover:text-primary px-3 py-2.5 rounded-xl hover:bg-surface-container transition-colors"
+                  >
+                    O INSTIC
+                  </a>
+                </nav>
               </div>
 
-              <nav className="flex flex-col gap-2 pt-4">
-                <a
-                  href="#cursos"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-base font-medium text-on-surface hover:text-primary px-3 py-2.5 rounded-lg hover:bg-surface-container transition-colors"
-                >
-                  Cursos
-                </a>
-                <a
-                  href="#metodologia"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-base font-medium text-on-surface hover:text-primary px-3 py-2.5 rounded-lg hover:bg-surface-container transition-colors"
-                >
-                  Metodologia
-                </a>
-                <a
-                  href="#sobre"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-base font-medium text-on-surface hover:text-primary px-3 py-2.5 rounded-lg hover:bg-surface-container transition-colors"
-                >
-                  O INSTIC
-                </a>
-              </nav>
-            </div>
+              {/* Rodapé do Menu Mobile */}
+              <div className="mt-auto flex flex-col gap-3 pt-6 border-t border-outline-variant/30">
+                {session ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      navigate(getHomeRoute(profile));
+                    }}
+                    className="w-full text-center bg-primary-container text-on-primary-container font-semibold px-5 py-3 rounded-xl hover:bg-primary-container/80 transition-all active:scale-95 cursor-pointer"
+                  >
+                    Voltar ao painel
+                  </button>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          navigate('/login');
+                        }}
+                        className="w-full text-center text-sm font-semibold text-on-surface border border-outline-variant/50 px-3 py-2.5 rounded-xl hover:bg-surface-container transition-colors cursor-pointer"
+                      >
+                        Entrar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          navigate('/register');
+                        }}
+                        className="w-full text-center text-sm font-semibold text-primary border border-primary/40 px-3 py-2.5 rounded-xl hover:bg-primary/10 transition-colors cursor-pointer"
+                      >
+                        Cadastrar-se
+                      </button>
+                    </div>
 
-            <div className="mt-auto flex flex-col gap-3">
-              {session ? (
-                <button onClick={() => { setMobileMenuOpen(false); navigate(getHomeRoute(profile)); }} className="bg-primary-container text-on-primary-container font-semibold px-5 py-3 rounded-lg">
-                  Voltar ao painel
-                </button>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => { setMobileMenuOpen(false); navigate('/login'); }}
-                    className="w-full text-center text-sm font-medium text-on-surface border border-outline-variant px-4 py-2.5 rounded-xl hover:bg-surface-container transition-colors"
-                  >
-                    Entrar na Conta
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setMobileMenuOpen(false); navigate('/register/matriculado'); }}
-                    className="w-full text-center text-xs font-semibold text-primary hover:underline py-1"
-                  >
-                    Já sou aluno matriculado
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setMobileMenuOpen(false); navigate('/test'); }}
-                    className="w-full bg-primary text-on-primary text-sm font-semibold px-5 py-3 rounded-xl shadow-xs hover:bg-primary/90 transition-all flex justify-center items-center gap-2"
-                  >
-                    <span>Começar Teste Grátis</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </>
-              )}
+                    {result?.recommendedCourseId ? (
+                      <div className="flex flex-col gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            navigate('/candidate/results');
+                          }}
+                          className="w-full text-center bg-primary text-on-primary font-semibold px-5 py-3 rounded-xl hover:bg-primary/90 transition-all active:scale-95 cursor-pointer"
+                        >
+                          Ver o teu resultado
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            navigate('/test');
+                          }}
+                          className="w-full text-center text-xs font-medium text-on-surface-variant hover:text-primary py-1"
+                        >
+                          Refazer teste vocacional
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          navigate('/test');
+                        }}
+                        className="w-full text-center bg-primary text-on-primary font-semibold px-5 py-3 rounded-xl hover:bg-primary/90 transition-all active:scale-95 cursor-pointer"
+                      >
+                        Começar Teste Grátis
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigate('/register/matriculado');
+                      }}
+                      className="w-full text-center text-xs font-semibold text-primary hover:underline pt-1 cursor-pointer"
+                    >
+                      Já sou aluno matriculado
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </>
 
       {/* Main Content */}
       <main className="grow">
@@ -315,14 +413,26 @@ export default function InRumoLandingPage() {
 
                 {/* Botões de Ação */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/test')}
-                    className="bg-primary text-on-primary font-semibold px-7 py-4 rounded-2xl hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg flex justify-center items-center gap-2.5 group active:scale-[0.98] cursor-pointer"
-                  >
-                    <span>Iniciar Teste Gratuito</span>
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </button>
+                  {session && result?.recommendedCourseId ? (
+                    <div className="flex flex-col items-end gap-1">
+                      <button onClick={() => navigate('/candidate/results')} className="bg-primary-container text-on-primary-container font-body-sm font-semibold px-5 py-2 rounded-lg">
+                        Ver o teu resultado
+                      </button>
+                      <button onClick={() => navigate('/test')} className="text-xs text-on-surface-variant hover:text-primary underline">
+                        Refazer teste
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => navigate('/test')}
+                      className="bg-primary text-on-primary font-semibold px-7 py-4 rounded-2xl hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg flex justify-center items-center gap-2.5 group active:scale-[0.98] cursor-pointer"
+                    >
+                      <span>Iniciar Teste Gratuito</span>
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => navigate('/course')}
@@ -462,7 +572,7 @@ export default function InRumoLandingPage() {
               </h2>
 
               <p className="font-body-md text-on-surface-variant leading-relaxed text-sm sm:text-base">
-                O Instituto Superior de Tecnologias de Informação e Comunicação (INSTIC) é uma instituição pública de referência em Angola. Capacitamos jovens talentos com competências técnicas e científicas rigorosas para liderar a transformação digital no mercado nacional e global.
+                O Instituto de Tecnologias de Informação e Comunicação (INSTIC) é uma instituição pública de referência em Angola. Capacitamos jovens talentos com competências técnicas e científicas rigorosas para liderar a transformação digital no mercado nacional e global.
               </p>
 
               {/* Cards de Estatísticas Otimizados */}
@@ -491,23 +601,23 @@ export default function InRumoLandingPage() {
                 {/* Aspect Ratio 16:9 Imagem */}
                 <div className="aspect-video w-full overflow-hidden">
                   <img
-                    src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=1000"
+                    src="/INSTIC.jpg"
                     alt="Campus e ambiente académico do INSTIC"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out"
                   />
                 </div>
 
                 {/* Overlay Gradiente */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/10 via-black/0 to-transparent pointer-events-none" />
 
                 {/* Floating Glassmorphism Badge */}
-                <div className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-black/40 backdrop-blur-md border border-white/10 text-white flex items-center justify-between">
+                {/* <div className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-black/40 backdrop-blur-md border border-white/10 text-white flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
                     <span className="text-xs font-semibold tracking-wide">Campus & Laboratórios de Alta Tecnologia</span>
                   </div>
                   <span className="text-[10px] uppercase font-bold text-white/70 bg-white/10 px-2 py-0.5 rounded-md">Luanda</span>
-                </div>
+                </div> */}
               </div>
             </div>
 
@@ -537,6 +647,7 @@ export default function InRumoLandingPage() {
             <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
               {[
                 {
+                  id: 'eng-informatica',
                   title: 'Engenharia Informática',
                   tag: 'Software & Cloud',
                   desc: 'Desenvolvimento de software, inteligência artificial e infraestruturas digitais para os desafios tecnológicos de amanhã.',
@@ -544,6 +655,7 @@ export default function InRumoLandingPage() {
                   color: 'from-blue-500/10 to-transparent',
                 },
                 {
+                  id: 'eng-telecom',
                   title: 'Engenharia de Telecomunicações',
                   tag: 'Redes & 5G',
                   desc: 'Sistemas de comunicação, redes corporativas e infraestruturas que conectam pessoas, dados e dispositivos no mundo todo.',
@@ -551,6 +663,7 @@ export default function InRumoLandingPage() {
                   color: 'from-purple-500/10 to-transparent',
                 },
                 {
+                  id: 'informatica-gestao',
                   title: 'Informática de Gestão',
                   tag: 'Business & Tech',
                   desc: 'Tecnologia aplicada à gestão empresarial — sistemas de informação, inteligência de negócio e análise de processos.',
@@ -560,7 +673,7 @@ export default function InRumoLandingPage() {
               ].map((course) => (
                 <div
                   key={course.title}
-                  onClick={() => navigate(`/course/${course.title}`)}
+                  onClick={() => navigate(`/course/${course.id}`)}
                   className="group relative bg-surface-container-lowest border border-outline-variant/60 rounded-3xl p-7 hover:border-primary/50 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between overflow-hidden"
                 >
                   {/* Subtle Hover Gradient Background */}
@@ -692,14 +805,38 @@ export default function InRumoLandingPage() {
 
                 {/* Botão de Ação Destacado */}
                 <div className="pt-2">
-                  <button
-                    onClick={() => navigate('/test')}
-                    className="w-full sm:w-auto bg-primary text-on-primary font-bold text-sm sm:text-base px-8 py-4 rounded-2xl hover:bg-primary/90 transition-all duration-300 shadow-lg hover:shadow-primary/25 inline-flex items-center justify-center gap-3 group active:scale-95 cursor-pointer"
-                  >
-                    <Sparkles className="w-5 h-5" />
-                    <span>Começar Teste Vocacional Grátis</span>
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </button>
+                  {session && result?.recommendedCourseId ? (
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+                      {/* Botão Secundário: Refazer Teste */}
+                      <button
+                        type="button"
+                        onClick={() => navigate('/test')}
+                        className="px-4 py-2.5 text-xs sm:text-sm font-medium text-on-surface-variant hover:text-primary transition-colors rounded-xl hover:bg-surface-container-low active:scale-95 cursor-pointer text-center"
+                      >
+                        Refazer teste
+                      </button>
+
+                      {/* Botão Principal: Ver Resultado */}
+                      <button
+                        type="button"
+                        onClick={() => navigate('/candidate/results')}
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary-container text-on-primary-container font-semibold text-sm rounded-xl hover:bg-primary-container/80 transition-all shadow-sm hover:shadow active:scale-95 cursor-pointer group"
+                      >
+                        <span>Ver o teu resultado</span>
+                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => navigate('/test')}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 bg-primary text-on-primary font-bold text-sm sm:text-base rounded-2xl shadow-lg hover:shadow-primary/25 hover:bg-primary/90 active:scale-95 transition-all duration-300 cursor-pointer group"
+                    >
+                      <Sparkles className="w-5 h-5" />
+                      <span>Começar Teste Vocacional Grátis</span>
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </button>
+                  )}
                 </div>
 
               </div>

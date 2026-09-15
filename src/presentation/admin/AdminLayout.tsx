@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { FileCheck, Upload, LogOut, Menu, X, ChevronLeft, ChevronRight, Compass, Users, Loader2 } from 'lucide-react';
+import { FileCheck, Upload, LogOut, Menu, X, ChevronLeft, ChevronRight, Users, Loader2 } from 'lucide-react';
 import { useAuth } from '../../application/auth/useAuth';
 
 const ADMIN_NAV_ITEMS = [
@@ -35,8 +35,8 @@ export default function AdminLayout() {
       {/* ================= HEADER MOBILE ================= */}
       <header className="md:hidden bg-surface border-b border-outline-variant/40 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-xs">
-            <Compass className="w-5 h-5" />
+          <div className="w-8 h-8 rounded-xl bg-surface flex items-center justify-center text-on-primary shadow-xs">
+            <img src='/favicon_2.png' alt='Logo do InRumo' className="w-7 h-7" />
           </div>
           <span className="font-heading font-bold text-base text-on-surface">InRumo Admin</span>
         </div>
@@ -69,7 +69,7 @@ export default function AdminLayout() {
           <div className={`flex items-center px-1 h-12 ${isCollapsed && !isMobileOpen ? 'justify-center' : 'justify-between'}`}>
             <div className="flex items-center gap-3 overflow-hidden">
               <div className="w-9 h-9 rounded-2xl bg-primary flex items-center justify-center text-on-primary shrink-0 shadow-xs">
-                <Compass className="w-5 h-5" />
+                <img src='/favicon_2.png' alt='Logo do InRumo' className="w-7 h-7" />
               </div>
               {(!isCollapsed || isMobileOpen) && (
                 <div className="flex flex-col">

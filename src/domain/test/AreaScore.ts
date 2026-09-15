@@ -12,3 +12,10 @@ export type AreaTestResult = {
   runnerUp: AreaScore | null;
   allScores: AreaScore[];
 };
+
+export type StoredAreaResult = {
+  recommendedAreaId: AreaId;
+  isTie: boolean;
+  runnerUpAreaId: AreaId | null;
+  allScores: { areaId: AreaId; percentage: number }[];
+};

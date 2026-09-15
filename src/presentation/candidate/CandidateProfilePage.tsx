@@ -36,14 +36,14 @@ export default function CandidateProfilePage() {
   };
 
   const handleAvatarChange = async (file: File) => {
-  if (!session) return;
-  try {
-    const url = await profileRepository.uploadAvatar(session.user.id, file);
-    setAvatarUrl(url);
-  } catch {
-    setError('Não foi possível actualizar a fotografia.');
-  }
-};
+    if (!session) return;
+    try {
+      const url = await profileRepository.uploadAvatar(session.user.id, file);
+      setAvatarUrl(url);
+    } catch {
+      setError('Não foi possível actualizar a fotografia.');
+    }
+  };
 
   const handleCancel = () => {
     setEditing(false);
@@ -71,21 +71,25 @@ export default function CandidateProfilePage() {
         <div className="relative group shrink-0">
 
           {avatarUrl ? (
-            <img src={avatarUrl} alt={nome} className="w-full h-full rounded-full object-cover" />
+            <img src={avatarUrl} alt={nome} className="w-24 h-24 rounded-full object-cover" />
           ) : (
             <div className="w-24 h-24 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-heading text-3xl font-bold uppercase shadow-inner">
               {nome.charAt(0) || <User className="w-10 h-10" />}
             </div>
           )}
 
-          <button
-            type="button"
+          <label
             title="Alterar fotografia"
-            className="absolute bottom-0 right-0 p-2.5 bg-surface-container-high text-on-surface-variant border border-outline-variant/60 rounded-full shadow-xs opacity-80"
+            className="absolute bottom-0 right-0 p-2.5 bg-surface-container-high text-on-surface-variant border border-outline-variant/60 rounded-full shadow-xs hover:bg-primary hover:text-on-primary transition-all cursor-pointer flex items-center justify-center"
           >
             <Camera size={14} />
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleAvatarChange(e.target.files[0])} />
-          </button>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => e.target.files?.[0] && handleAvatarChange(e.target.files[0])}
+            />
+          </label>
         </div>
 
         {/* Info Rápida */}

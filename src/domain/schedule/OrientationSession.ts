@@ -14,6 +14,10 @@ export type OrientationSession = {
   orientadorId: string;
   dataHora: string;
   estado: SessionStatus;
+  modo: 'presencial' | 'online';
+  local: string | null;
+  notasOrientador: string | null;
+  motivoCancelamento: string | null;
 };
 
 export type OrientadorInfo = { id: string; nome: string };

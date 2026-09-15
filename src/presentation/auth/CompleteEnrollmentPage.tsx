@@ -80,6 +80,8 @@ export default function CompleteEnrollmentPage() {
     setLoading(true);
 
     try {
+      console.log('cursoId', cursoId);
+      
       const result = await completeMatriculadoVerification(
         session.user.id,
         { nome: profile.nome, numeroProcesso, cursoId: cursoId || undefined, documento: documento ?? undefined },

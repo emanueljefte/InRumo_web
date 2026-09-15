@@ -11,13 +11,17 @@ import {
   CheckCircle2,
   AlertCircle,
   PlusCircle,
-  FolderOpen
+  FolderOpen,
+  MessageSquare,
+  Sparkles,
+  Layers
 } from 'lucide-react';
 import { useAuth } from '../../application/auth/useAuth';
 import { SupabaseScheduleRepository } from '../../data/supabase/SupabaseScheduleRepository';
 import { SupabaseDocumentRepository } from '../../data/supabase/SupabaseDocumentRepository';
 import type { OrientationSession } from '../../domain/schedule/OrientationSession';
 import type { SessionDocument } from '../../domain/schedule/Document';
+import { supabase } from '../../api/supabase';
 
 function formatBytes(bytes?: number, decimals = 1): string {
   if (!bytes || bytes === 0) return '0 B';
@@ -31,7 +35,7 @@ function formatBytes(bytes?: number, decimals = 1): string {
 function getFileIcon(fileName: string) {
   const ext = fileName.split('.').pop()?.toLowerCase();
   if (['png', 'jpg', 'jpeg', 'webp', 'svg'].includes(ext || '')) {
-    return <ImageIcon className="w-5 h-5 text-purple-500 shrink-0" />;
+    return <ImageIcon className="w-5 h-5 text-tertiary shrink-0" />;
   }
   if (['pdf', 'doc', 'docx', 'txt'].includes(ext || '')) {
     return <FileText className="w-5 h-5 text-primary shrink-0" />;
@@ -52,72 +56,114 @@ export default function DocumentsPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
-  // Carregar Sessões
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [selectedTab, setSelectedTab] = useState<'session' | 'chat'>('session');
+  const currentUserId = session?.user?.id;
+  const [loadingSessions, setLoadingSessions] = useState(() => Boolean(currentUserId));
+
+  // 1. Carregar Chat do Utilizador
   useEffect(() => {
+    const userId = session?.user?.id;
+    if (typeof userId !== 'string') return;
 
-  const currentSession = session?.user
-  let isMounted = true;
+    supabase
+      .from('chats')
+      .select('id')
+      .eq('user_id', userId)
+      .neq('status', 'closed')
+      .maybeSingle()
+      .then(({ data }) => setChatId(data?.id ?? null));
+  }, [session?.user?.id]);
 
-  async function loadSessions() {
-    try {
-      const userSessions = await scheduleRepository.getSessionsForMatriculado(currentSession!.id);
-      if (!isMounted) return;
+  // 2. Carregar Sessões de Orientação
+  useEffect(() => {
+    if (!currentUserId) return;
 
-      const validSessions = userSessions.filter((x) => x.estado !== 'cancelada');
-      setSessions(validSessions);
+    let isMounted = true;
 
-      if (validSessions.length > 0) {
-        setSelectedSessionId(validSessions[0].id);
+    async function loadSessions(userId: string) {
+      // 1. Atualização do loading feita de forma segura no início da rotina
+      if (isMounted) setLoadingSessions(true);
+
+      try {
+        const userSessions = await scheduleRepository.getSessionsForMatriculado(userId);
+        if (!isMounted) return;
+
+        const validSessions = userSessions.filter((x) => x.estado !== 'cancelada');
+        setSessions(validSessions);
+
+        if (validSessions.length > 0) {
+          setSelectedSessionId(validSessions[0].id);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar sessões:', err);
+        if (isMounted) setSessions([]);
+      } finally {
+        if (isMounted) setLoadingSessions(false);
       }
-    } catch (err) {
-      console.error('Erro ao carregar sessões:', err);
-      if (isMounted) setSessions([]); // marca como "buscado, mas vazio/erro" para não ficar em loading eterno
     }
-  }
 
-  loadSessions();
+    loadSessions(currentUserId);
 
-  return () => {
-    isMounted = false;
-  };
-}, [session?.user?.id, scheduleRepository]);
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUserId, scheduleRepository]);
 
-const loading = Boolean(session?.user?.id) && sessions === undefined;
-  // Carregar Documentos da Sessão Selecionada
-useEffect(() => {
-  if (!selectedSessionId) return;
+  // 3. Carregar Documentos consoante a Tab Selecionada
+  useEffect(() => {
+    let isMounted = true;
 
-  let isMounted = true;
+    async function fetchDocs() {
+      if (selectedTab === 'session' && selectedSessionId) {
+        try {
+          const docs = await documentRepository.getDocuments(selectedSessionId);
+          if (isMounted) setDocuments(docs);
+        } catch (err) {
+          console.error('Erro ao carregar documentos da sessão:', err);
+          if (isMounted) setDocuments([]);
+        }
+      } else if (selectedTab === 'chat' && chatId) {
+        try {
+          const docs = await documentRepository.getChatDocuments(chatId);
+          if (isMounted) setDocuments(docs);
+        } catch (err) {
+          console.error('Erro ao carregar documentos do chat:', err);
+          if (isMounted) setDocuments([]);
+        }
+      } else {
+        if (isMounted) setDocuments([]);
+      }
+    }
 
-  documentRepository
-    .getDocuments(selectedSessionId)
-    .then((docs) => {
-      if (isMounted) setDocuments(docs);
-    })
-    .catch((err) => {
-      console.error('Erro ao carregar documentos:', err);
-      if (isMounted) setDocuments([]);
-    });
+    fetchDocs();
 
-  return () => {
-    isMounted = false;
-  };
-}, [selectedSessionId, documentRepository]);
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedTab, selectedSessionId, chatId, documentRepository]);
 
-const docsLoading = documents === undefined;
+  const docsLoading = documents === undefined;
 
+  // 4. Gestão de Upload por Origem
   const handleUpload = useCallback(
     async (file: File) => {
       const userId = session?.user?.id;
-      if (!selectedSessionId || typeof userId !== 'string' || uploading) return;
+      if (typeof userId !== 'string' || uploading) return;
 
       setUploading(true);
       setUploadSuccess(false);
 
       try {
-        await documentRepository.uploadDocument(selectedSessionId, userId, file);
-        const updatedDocs = await documentRepository.getDocuments(selectedSessionId);
-        setDocuments(updatedDocs);
+        if (selectedTab === 'session' && selectedSessionId) {
+          await documentRepository.uploadDocument(selectedSessionId, userId, file);
+          setDocuments(await documentRepository.getDocuments(selectedSessionId));
+        } else if (selectedTab === 'chat' && chatId) {
+          await documentRepository.uploadChatDocument(chatId, userId, file);
+          setDocuments(await documentRepository.getChatDocuments(chatId));
+        } else {
+          return;
+        }
         setUploadSuccess(true);
         setTimeout(() => setUploadSuccess(false), 3000);
       } catch (err) {
@@ -126,7 +172,7 @@ const docsLoading = documents === undefined;
         setUploading(false);
       }
     },
-    [selectedSessionId, session?.user?.id, uploading, documentRepository]
+    [selectedTab, selectedSessionId, chatId, session?.user?.id, uploading, documentRepository]
   );
 
   const handleDownload = async (doc: SessionDocument) => {
@@ -146,35 +192,37 @@ const docsLoading = documents === undefined;
     }
   };
 
-  if (loading) {
+  if (loadingSessions) {
     return (
-      <div className="max-w-2xl mx-auto py-16 flex flex-col items-center justify-center space-y-4">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      <div className="max-w-2xl mx-auto py-20 flex flex-col items-center justify-center space-y-4 animate-fadeIn">
+        <div className="p-4 rounded-3xl bg-primary/10 border border-primary/20 text-primary">
+          <Loader2 className="w-8 h-8 animate-spin" />
+        </div>
         <p className="text-xs sm:text-sm text-on-surface-variant font-medium">
-          A carregar os teus documentos...
+          A organizar os teus documentos e sessões...
         </p>
       </div>
     );
   }
 
-  if (sessions.length === 0) {
+  if (sessions.length === 0 && !chatId) {
     return (
-      <div className="max-w-md mx-auto text-center py-12 px-4 space-y-6 animate-fadeIn">
-        <div className="w-16 h-16 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
-          <FolderOpen className="w-8 h-8" />
+      <div className="max-w-md mx-auto text-center py-16 px-4 space-y-6 animate-fadeIn">
+        <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-primary/20 to-primary/5 text-primary border border-primary/30 flex items-center justify-center mx-auto shadow-lg shadow-primary/5">
+          <FolderOpen className="w-10 h-10" />
         </div>
         <div className="space-y-2">
-          <h1 className="font-heading text-xl sm:text-2xl font-bold text-on-surface">
-            Nenhuma sessão encontrada
+          <h1 className="font-heading text-xl sm:text-2xl font-bold text-on-surface tracking-tight">
+            Nenhum documento disponível
           </h1>
-          <p className="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
-            Os teus documentos ficam organizados dentro das tuas sessões de orientação. Agenda uma sessão para poderes partilhar ficheiros com o teu orientador.
+          <p className="text-xs sm:text-sm text-on-surface-variant/80 leading-relaxed">
+            Os teus ficheiros ficam associados às tuas conversas de chat e sessões de orientação agendadas.
           </p>
         </div>
         <button
           type="button"
           onClick={() => navigate('/student/schedule')}
-          className="w-full inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-on-primary font-bold text-xs sm:text-sm px-6 py-3.5 rounded-2xl transition-all shadow-xs cursor-pointer"
+          className="w-full inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-on-primary font-bold text-xs sm:text-sm px-6 py-3.5 rounded-2xl transition-all duration-200 shadow-md shadow-primary/20 cursor-pointer active:scale-95"
         >
           <PlusCircle className="w-4 h-4" />
           <span>Agendar Sessão de Orientação</span>
@@ -184,72 +232,111 @@ const docsLoading = documents === undefined;
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 p-4 animate-fadeIn">
-      {/* Título e Descrição */}
+    <div className="max-w-2xl mx-auto space-y-6 p-4 sm:p-6 animate-fadeIn font-body text-on-surface">
+      {/* TÍTULO E DESCRIÇÃO */}
       <div className="space-y-1">
-        <h1 className="font-heading text-2xl sm:text-3xl font-bold text-on-surface">
-          Documentos
-        </h1>
-        <p className="text-xs sm:text-sm text-on-surface-variant">
-          Gere os ficheiros e relatórios associados às tuas sessões de orientação.
+        <div className="flex items-center gap-2">
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">
+            Documentos
+          </h1>
+          <Sparkles className="w-5 h-5 text-primary animate-pulse" />
+        </div>
+        <p className="text-xs sm:text-sm text-on-surface-variant/80">
+          Gere os ficheiros, relatórios e anexos partilhados na plataforma.
         </p>
       </div>
 
-      {/* Tabs / Seletor de Sessões */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/80">
-          Sessão de Orientação
-        </label>
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-          {sessions.map((s) => {
-            const isSelected = selectedSessionId === s.id;
-            const formattedDate = new Date(s.dataHora).toLocaleDateString('pt-PT', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric',
-            });
-
-            return (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => setSelectedSessionId(s.id)}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-primary text-on-primary shadow-xs'
-                    : 'bg-surface-container-low hover:bg-surface-container text-on-surface-variant border border-outline-variant/40'
+      {/* SELETOR DE ORIGEM (TABS) */}
+      <div className="bg-surface-container-lowest/80 backdrop-blur-xl border border-outline-variant/30 rounded-3xl p-3 sm:p-4 space-y-4 shadow-xs">
+        <div className="space-y-2">
+          <label className="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant/70 flex items-center gap-1.5 px-1">
+            <Layers size={13} className="text-primary" /> Origem do Ficheiro
+          </label>
+          <div className="grid grid-cols-2 gap-2 bg-surface-container-low/60 p-1.5 rounded-2xl border border-outline-variant/20">
+            <button
+              type="button"
+              onClick={() => setSelectedTab('session')}
+              className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${selectedTab === 'session'
+                  ? 'bg-primary text-on-primary shadow-xs shadow-primary/20'
+                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50'
                 }`}
-              >
-                <Calendar className="w-3.5 h-3.5 shrink-0" />
-                <span>Sessão de {formattedDate}</span>
-              </button>
-            );
-          })}
+            >
+              <Calendar size={15} />
+              <span>Sessões ({sessions.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedTab('chat')}
+              disabled={!chatId}
+              className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${selectedTab === 'chat'
+                  ? 'bg-primary text-on-primary shadow-xs shadow-primary/20'
+                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50'
+                }`}
+            >
+              <MessageSquare size={15} />
+              <span>Chat Directo</span>
+            </button>
+          </div>
         </div>
+
+        {/* SUB-SELETOR DE SESSÕES (QUANDO 'SESSION' ESTÁ ATIVO) */}
+        {selectedTab === 'session' && sessions.length > 0 && (
+          <div className="space-y-1.5 pt-1 animate-fadeIn">
+            <span className="text-[10px] font-semibold text-on-surface-variant/60 uppercase tracking-wider px-1">
+              Seleciona a Sessão:
+            </span>
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {sessions.map((s) => {
+                const isSelected = selectedSessionId === s.id;
+                const formattedDate = new Date(s.dataHora).toLocaleDateString('pt-PT', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                });
+
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setSelectedSessionId(s.id)}
+                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer border ${isSelected
+                        ? 'bg-primary-container text-on-primary-container border-primary/40 shadow-2xs'
+                        : 'bg-surface-container-low/80 hover:bg-surface-container text-on-surface-variant border-outline-variant/30'
+                      }`}
+                  >
+                    <Calendar className="w-3.5 h-3.5 shrink-0 text-primary" />
+                    <span>Sessão de {formattedDate}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Cartão de Ficheiros */}
-      <div className="bg-surface-container-lowest border border-outline-variant/60 rounded-3xl p-5 sm:p-6 space-y-6 shadow-xs">
-        <div className="flex items-center justify-between border-b border-outline-variant/40 pb-4">
+      {/* CARTÃO DE FICHEIROS */}
+      <div className="bg-surface-container-lowest/90 backdrop-blur-xl border border-outline-variant/30 rounded-3xl p-5 sm:p-6 space-y-6 shadow-sm">
+        <div className="flex items-center justify-between border-b border-outline-variant/20 pb-4">
           <h2 className="font-heading text-base font-bold text-on-surface">
             Ficheiros Guardados
           </h2>
-          <span className="text-xs font-medium text-on-surface-variant bg-surface-container-high px-2.5 py-1 rounded-full">
+          <span className="text-xs font-bold text-primary bg-primary/10 border border-primary/20 px-3 py-1 rounded-full">
             {(documents ?? []).length} {(documents ?? []).length === 1 ? 'ficheiro' : 'ficheiros'}
           </span>
         </div>
 
-        {/* Lista de Documentos */}
+        {/* LISTA DE DOCUMENTOS */}
         {docsLoading ? (
-          <div className="py-8 flex justify-center items-center gap-2 text-xs text-on-surface-variant font-medium">
-            <Loader2 className="w-4 h-4 animate-spin text-primary" />
-            <span>A atualizar ficheiros...</span>
+          <div className="py-10 flex justify-center items-center gap-2 text-xs text-on-surface-variant font-medium">
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            <span>A atualizar lista de ficheiros...</span>
           </div>
         ) : documents.length === 0 ? (
-          <div className="py-8 text-center space-y-2">
-            <AlertCircle className="w-8 h-8 text-on-surface-variant/50 mx-auto" />
-            <p className="text-xs sm:text-sm text-on-surface-variant">
-              Nenhum documento adicionado nesta sessão.
+          <div className="py-10 text-center space-y-2 border border-dashed border-outline-variant/30 rounded-2xl bg-surface-container-low/20">
+            <AlertCircle className="w-8 h-8 text-on-surface-variant/40 mx-auto" />
+            <p className="text-xs sm:text-sm font-medium text-on-surface-variant/80">
+              Nenhum documento associado a esta origem.
             </p>
           </div>
         ) : (
@@ -257,17 +344,17 @@ const docsLoading = documents === undefined;
             {documents.map((doc) => (
               <div
                 key={doc.id}
-                className="flex items-center justify-between bg-surface-container-low/60 hover:bg-surface-container-low border border-outline-variant/40 rounded-2xl p-3.5 sm:p-4 transition-all group"
+                className="flex items-center justify-between bg-surface-container-low/50 hover:bg-surface-container-low border border-outline-variant/30 rounded-2xl p-3.5 sm:p-4 transition-all duration-200 group shadow-2xs hover:shadow-xs"
               >
                 <div className="flex items-center gap-3.5 min-w-0 pr-2">
-                  <div className="w-10 h-10 rounded-xl bg-surface-container-lowest border border-outline-variant/40 flex items-center justify-center shrink-0">
+                  <div className="w-11 h-11 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 flex items-center justify-center shrink-0 shadow-2xs">
                     {getFileIcon(doc.fileName)}
                   </div>
                   <div className="min-w-0 space-y-0.5">
-                    <p className="font-semibold text-xs sm:text-sm text-on-surface truncate">
+                    <p className="font-semibold text-xs sm:text-sm text-on-surface truncate group-hover:text-primary transition-colors">
                       {doc.fileName}
                     </p>
-                    <p className="text-[11px] text-on-surface-variant flex items-center gap-2">
+                    <p className="text-[11px] text-on-surface-variant/70 flex items-center gap-2 font-medium">
                       {doc.fileSize && <span>{formatBytes(doc.fileSize)}</span>}
                       {doc.createdAt && (
                         <>
@@ -284,7 +371,7 @@ const docsLoading = documents === undefined;
                 <button
                   type="button"
                   onClick={() => handleDownload(doc)}
-                  className="p-2.5 rounded-xl bg-surface-container-lowest hover:bg-primary/10 text-on-surface-variant hover:text-primary border border-outline-variant/40 transition-all cursor-pointer shrink-0"
+                  className="p-2.5 rounded-xl bg-surface-container-lowest hover:bg-primary/10 text-on-surface-variant hover:text-primary border border-outline-variant/30 transition-all cursor-pointer shrink-0 active:scale-95 shadow-2xs"
                   aria-label={`Descarregar ${doc.fileName}`}
                   title="Descarregar ficheiro"
                 >
@@ -295,7 +382,7 @@ const docsLoading = documents === undefined;
           </div>
         )}
 
-        {/* Zona de Upload Dropzone */}
+        {/* ZONA DE UPLOAD DROPZONE */}
         <div className="space-y-2 pt-2">
           <label
             onDragOver={(e) => {
@@ -304,11 +391,10 @@ const docsLoading = documents === undefined;
             }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleDrop}
-            className={`flex flex-col items-center justify-center gap-2.5 border-2 border-dashed rounded-2xl p-6 sm:p-8 cursor-pointer transition-all text-center relative ${
-              isDragging
-                ? 'border-primary bg-primary/5'
-                : 'border-outline-variant/80 hover:border-primary hover:bg-surface-container-low/50'
-            } ${uploading ? 'pointer-events-none opacity-60' : ''}`}
+            className={`flex flex-col items-center justify-center gap-2.5 border-2 border-dashed rounded-3xl p-6 sm:p-8 cursor-pointer transition-all duration-300 text-center relative ${isDragging
+                ? 'border-primary bg-primary/10 scale-[1.01]'
+                : 'border-outline-variant/40 hover:border-primary/60 hover:bg-surface-container-low/40'
+              } ${uploading ? 'pointer-events-none opacity-60' : ''}`}
           >
             <input
               type="file"
@@ -317,35 +403,35 @@ const docsLoading = documents === undefined;
               onChange={(e) => {
                 if (e.target.files?.[0]) {
                   handleUpload(e.target.files[0]);
-                  e.target.value = ''; // Reset do input
+                  e.target.value = '';
                 }
               }}
             />
 
             {uploading ? (
               <div className="flex flex-col items-center space-y-2">
-                <Loader2 className="w-7 h-7 text-primary animate-spin" />
-                <span className="text-xs sm:text-sm font-semibold text-primary">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                <span className="text-xs sm:text-sm font-bold text-primary">
                   A enviar o ficheiro...
                 </span>
               </div>
             ) : uploadSuccess ? (
-              <div className="flex flex-col items-center space-y-1 text-emerald-600">
-                <CheckCircle2 className="w-7 h-7" />
+              <div className="flex flex-col items-center space-y-1 text-emerald-600 animate-fadeIn">
+                <CheckCircle2 className="w-8 h-8" />
                 <span className="text-xs sm:text-sm font-bold">
-                  Documento enviado com sucesso!
+                  Documento guardado com sucesso!
                 </span>
               </div>
             ) : (
               <>
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary/20 to-primary/5 text-primary border border-primary/20 flex items-center justify-center shadow-xs">
                   <UploadCloud className="w-6 h-6" />
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs sm:text-sm font-bold text-on-surface">
                     Clica para enviar ou arrasta o ficheiro para aqui
                   </p>
-                  <p className="text-[11px] text-on-surface-variant">
+                  <p className="text-[11px] text-on-surface-variant/70 font-medium">
                     Suporta relatórios, imagens e documentos (PDF, DOCX, PNG) até 10MB
                   </p>
                 </div>

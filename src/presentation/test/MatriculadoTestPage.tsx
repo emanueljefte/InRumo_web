@@ -134,28 +134,6 @@ export default function MatriculadoTestPage() {
           <QuestionRenderer question={currentQuestion} onAnswer={handleAnswer} />
         </div>
 
-        {/* <div className="py-4">
-          <div className="grid grid-cols-5 gap-2 sm:gap-4 max-w-150 mx-auto items-start">
-            {[1, 2, 3, 4, 5].map((score) => {
-              const isSelected = selectedScore === score;
-              let label = '';
-              if (score === 1) label = 'Nada a ver comigo';
-              if (score === 3) label = 'Neutro';
-              if (score === 5) label = 'Muito a ver comigo';
-              return (
-                <div key={score} className="flex flex-col items-center gap-3">
-                  <button type="button" onClick={() => handleScoreSelect(score)}
-                    className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center font-heading text-lg sm:text-xl font-bold transition-all duration-200 ${isSelected ? 'bg-primary text-white ring-4 ring-primary-container/40 scale-105 shadow-sm' : 'bg-white border border-outline-variant text-on-background hover:border-primary hover:bg-primary-container/10'
-                      }`}>
-                    {score}
-                  </button>
-                  {label && <span className="text-[11px] sm:text-xs text-outline text-center leading-tight font-medium max-w-20">{label}</span>}
-                </div>
-              );
-            })}
-          </div>
-        </div> */}
-
         <div className="pt-6 border-t border-surface-container-high flex items-center justify-between">
           <button type="button" onClick={handlePrev}
             className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-on-background border border-outline-variant bg-white hover:bg-surface-container py-3 px-6 rounded-xl transition-all">

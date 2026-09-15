@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MessageCircle, Search, Clock, ArrowRight, Inbox, Sparkles, } from 'lucide-react';
 import { SupabaseChatRepository } from '../../data/supabase/SupabaseChatRepository';
 import type { EscalatedChat } from '../../domain/schedule/ChatModeration';
+import { COURSE_LABELS } from '../../domain/course/courseLabels';
 
 export default function OrientadorChatsPage() {
     const navigate = useNavigate();
@@ -165,6 +166,10 @@ export default function OrientadorChatsPage() {
                                 <p className="text-xs text-on-surface-variant truncate font-normal">
                                     {chat.lastMessage || 'Sem mensagens recentes.'}
                                 </p>
+                                <div className="flex gap-2 mt-1">
+                                    {chat.cursoId && <span className="text-[10px] font-semibold text-primary bg-primary-container/30 px-2 py-0.5 rounded-full">{COURSE_LABELS[chat.cursoId]}</span>}
+                                    {chat.areaNome && <span className="text-[10px] font-semibold text-tertiary bg-tertiary-container/30 px-2 py-0.5 rounded-full">{chat.areaNome}</span>}
+                                </div>
                             </div>
 
                             {/* Ícone de Ação / Seta */}

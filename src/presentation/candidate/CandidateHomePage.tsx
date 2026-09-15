@@ -98,7 +98,7 @@ export default function CandidateHomePage() {
             {result && result.recommendedCourseId ? (
               <RecommendedCourseCard result={{ ...result, recommendedCourseId: result.recommendedCourseId }} />
             ) : (
-              <TakeTestPromptCard onStart={() => navigate('/candidate/test')} />
+              <TakeTestPromptCard onStart={() => navigate('/test')} />
             )}
           </div>
 

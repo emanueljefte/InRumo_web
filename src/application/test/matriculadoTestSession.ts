@@ -8,6 +8,7 @@ const MAX_SESSION_AGE_MS = 1000 * 60 * 60 * 2;
 
 export type MatriculadoTestSession = {
   cursoId: CourseId;
+  formatFilter?: QuestionType[];
   questions: MatriculadoQuestion[];
   answers: Record<string, QuestionAnswer>;
   currentIndex: number;
@@ -20,11 +21,13 @@ export function loadOrCreateMatriculadoSession(cursoId: CourseId, formatFilter?:
   if (raw) {
     const session: MatriculadoTestSession = JSON.parse(raw);
     const isExpired = Date.now() - session.startedAt > MAX_SESSION_AGE_MS;
-    if (!isExpired && session.cursoId === cursoId) return session;
+    const sameFormat = JSON.stringify(session.formatFilter ?? null) === JSON.stringify(formatFilter ?? null);
+    if (!isExpired && session.cursoId === cursoId && sameFormat) return session;
   }
 
   const session: MatriculadoTestSession = {
     cursoId,
+    formatFilter,
     questions: selectMatriculadoQuestions(cursoId, formatFilter),
     answers: {},
     currentIndex: 0,

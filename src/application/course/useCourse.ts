@@ -19,7 +19,7 @@ export function useCourse(id: CourseId | undefined, courseRepository: CourseRepo
     };
   }, [id, courseRepository]);
 
-  const loading = course?.id !== id; // deriva do estado atual, sem setState explícito
+  const loading = course?.id !== id; 
 
   return { course, loading };
 }

@@ -9,15 +9,17 @@ import {
   Inbox,
   X,
   AlertTriangle,
-  Clock
+  Clock,
+  AlertCircle
 } from 'lucide-react';
 import { SupabaseEnrollmentReviewRepository } from '../../data/supabase/SupabaseEnrollmentReviewRepository';
 import { supabase } from '../../api/supabase';
 import type { PendingEnrollment } from '../../domain/admin/EnrollmentReviewRepository';
+import { COURSE_LABELS } from '../../domain/course/courseLabels';
 
 export default function EnrollmentReviewPage() {
   const repository = useMemo(() => new SupabaseEnrollmentReviewRepository(), []);
-  
+
   // Estados de dados e carregamento
   const [pending, setPending] = useState<PendingEnrollment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +36,7 @@ export default function EnrollmentReviewPage() {
   // Modal de Rejeição com Motivo
   const [rejectingItem, setRejectingItem] = useState<PendingEnrollment | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
-
+  
   // Carregamento Inicial com Proteção de Desmontagem
   useEffect(() => {
     let isMounted = true;
@@ -42,6 +44,7 @@ export default function EnrollmentReviewPage() {
     async function loadPending() {
       try {
         const data = await repository.getPendingEnrollments();
+        
         if (isMounted) {
           setPending(data);
         }
@@ -86,9 +89,13 @@ export default function EnrollmentReviewPage() {
 
   // Aprovar Comprovativo
   const handleApprove = async (item: PendingEnrollment) => {
+    if (!item.cursoId) {
+      alert('Este utilizador não seleccionou um curso no registo. Não é possível aprovar.');
+      return;
+    }
     setProcessingId(item.documentId);
     try {
-      await repository.approveEnrollment(item.documentId, item.userId);
+      await repository.approveEnrollment(item.documentId, item.userId, item.numeroProcesso, item.cursoId);
       setPending((prev) => prev.filter((p) => p.documentId !== item.documentId));
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Erro ao aprovar comprovativo.');
@@ -117,7 +124,7 @@ export default function EnrollmentReviewPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      
+
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-outline-variant/40">
         <div>
@@ -162,7 +169,7 @@ export default function EnrollmentReviewPage() {
           ))}
         </div>
       ) : pending.length === 0 ? (
-        
+
         /* Estado Vazio */
         <div className="text-center py-16 px-4 bg-surface-container-lowest border border-outline-variant/60 rounded-3xl space-y-4">
           <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
@@ -176,7 +183,7 @@ export default function EnrollmentReviewPage() {
           </div>
         </div>
       ) : (
-        
+
         /* Lista de Comprovativos Pendentes */
         <div className="grid grid-cols-1 gap-4">
           {pending.map((item) => {
@@ -232,6 +239,15 @@ export default function EnrollmentReviewPage() {
                     <span>Rejeitar</span>
                   </button>
 
+                  <p className="font-body-sm text-xs text-on-surface-variant">
+                    {item.cursoId ? COURSE_LABELS[item.cursoId] : 'Curso não seleccionado'}
+                  </p>
+                  {item.isDuplicate && (
+                    <p className="text-xs text-error font-medium flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5" /> Número de processo já usado por outra conta verificada
+                    </p>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => handleApprove(item)}
@@ -256,7 +272,7 @@ export default function EnrollmentReviewPage() {
       {previewUrl && (
         <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-surface-container-lowest border border-outline-variant/60 rounded-3xl w-full max-w-3xl h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-scaleIn">
-            
+
             {/* Header do Modal */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/40 bg-surface-container-low">
               <div className="flex items-center gap-2 truncate">

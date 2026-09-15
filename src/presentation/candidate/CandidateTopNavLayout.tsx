@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { 
-  LogOut, 
-  Menu, 
-  User, 
-  X, 
-  Home, 
-  Award, 
-  MessageSquare, 
-  BookOpen, 
-  ChevronDown, 
+import {
+  LogOut,
+  Menu,
+  User,
+  X,
+  Home,
+  Award,
+  MessageSquare,
+  BookOpen,
+  ChevronDown,
   Sparkles,
-  Loader2 
+  Loader2
 } from 'lucide-react';
 import { useAuth } from '../../application/auth/useAuth';
 
@@ -32,11 +32,12 @@ export default function CandidateTopNavLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
-
+  console.log(profile);
+  
   // Fecha o dropdown ao clicar fora
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -92,11 +93,11 @@ export default function CandidateTopNavLayout() {
       {/* ================= HEADER PRINCIPAL ================= */}
       <header className="bg-white/80 backdrop-blur-md border-b border-[#e8e7f1] sticky top-0 z-40 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
-          
+
           {/* Logo & Branding */}
           <div className="flex items-center gap-8">
-            <NavLink 
-              to="/candidate" 
+            <NavLink
+              to="/candidate"
               className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-lg p-1"
             >
               <div className="bg-primary/10 w-9 h-9 rounded-xl flex items-center justify-center border border-primary/20 group-hover:bg-primary/20 transition-colors">
@@ -115,10 +116,9 @@ export default function CandidateTopNavLayout() {
                   to={to}
                   end={to === '/candidate'}
                   className={({ isActive }) =>
-                    `px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 flex items-center gap-2 ${
-                      isActive
-                        ? 'bg-primary/10 text-primary shadow-xs'
-                        : 'text-[#504536] hover:text-[#1a1b22] hover:bg-gray-100/70'
+                    `px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 flex items-center gap-2 ${isActive
+                      ? 'bg-primary/10 text-primary shadow-xs'
+                      : 'text-[#504536] hover:text-[#1a1b22] hover:bg-gray-100/70'
                     }`
                   }
                 >
@@ -126,9 +126,8 @@ export default function CandidateTopNavLayout() {
                     <>
                       <span>{label}</span>
                       {to === '/candidate/chat' && (
-                        <span className={`px-1.5 py-0.5 text-[10px] rounded-full font-bold uppercase tracking-wider ${
-                          isActive ? 'bg-primary text-white' : 'bg-primary/10 text-primary'
-                        }`}>
+                        <span className={`px-1.5 py-0.5 text-[10px] rounded-full font-bold uppercase tracking-wider ${isActive ? 'bg-primary text-white' : 'bg-primary/10 text-primary'
+                          }`}>
                           AI
                         </span>
                       )}
@@ -141,7 +140,7 @@ export default function CandidateTopNavLayout() {
 
           {/* Perfil e Ações Desktop */}
           <div className="hidden md:flex items-center gap-3">
-            
+
             {/* Tag do Perfil Activo */}
             <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[11px] font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -157,9 +156,14 @@ export default function CandidateTopNavLayout() {
                 aria-haspopup="true"
               >
                 <div className="w-8 h-8 rounded-lg bg-primary text-white text-xs font-bold flex items-center justify-center shadow-xs">
-                  {getUserInitials()}
+                  
+                  {profile?.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt="Logo do usuário" />
+                  ) :
+                    getUserInitials()
+                  }
                 </div>
-                <span className="text-xs font-semibold text-[#1a1b22] max-w-[120px] truncate">
+                <span className="text-xs font-semibold text-[#1a1b22] max-w-30 truncate">
                   {getUserDisplayName()}
                 </span>
                 <ChevronDown className={`w-3.5 h-3.5 text-[#827564] transition-transform duration-200 ${userDropdownOpen ? 'rotate-180' : ''}`} />
@@ -218,9 +222,9 @@ export default function CandidateTopNavLayout() {
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 md:hidden animate-in fade-in-50 duration-200">
           {/* Overlay Escuro */}
-          <div 
-            className="absolute inset-0 bg-black/40 backdrop-blur-xs" 
-            onClick={() => setMobileMenuOpen(false)} 
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-xs"
+            onClick={() => setMobileMenuOpen(false)}
           />
 
           {/* Painel Lateral */}
@@ -246,7 +250,11 @@ export default function CandidateTopNavLayout() {
               {/* Card do Perfil no Mobile */}
               <div className="mt-5 p-3.5 rounded-2xl bg-surface-container-high/60 border border-[#e8e7f1] flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-primary text-white text-sm font-bold flex items-center justify-center shadow-xs shrink-0">
-                  {getUserInitials()}
+                  {profile?.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt="Logo do usuário" />
+                  ) :
+                    getUserInitials()
+                  }
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold text-[#1a1b22] truncate">{getUserDisplayName()}</p>
@@ -263,10 +271,9 @@ export default function CandidateTopNavLayout() {
                     end={to === '/candidate'}
                     onClick={() => setMobileMenuOpen(false)}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${
-                        isActive
-                          ? 'bg-primary text-white shadow-sm'
-                          : 'text-[#504536] hover:bg-gray-100/80 hover:text-[#1a1b22]'
+                      `flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${isActive
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'text-[#504536] hover:bg-gray-100/80 hover:text-[#1a1b22]'
                       }`
                     }
                   >
@@ -284,10 +291,9 @@ export default function CandidateTopNavLayout() {
                   to="/candidate/profile"
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${
-                      isActive
-                        ? 'bg-primary text-white shadow-sm'
-                        : 'text-[#504536] hover:bg-gray-100/80 hover:text-[#1a1b22]'
+                    `flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${isActive
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-[#504536] hover:bg-gray-100/80 hover:text-[#1a1b22]'
                     }`
                   }
                 >

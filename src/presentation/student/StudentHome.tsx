@@ -4,7 +4,6 @@ import {
   MessageCircle,
   Sparkles,
   ArrowRight,
-  ClipboardList,
   BarChart3,
   Calendar,
   Compass,
@@ -132,7 +131,7 @@ export default function StudentHomePage() {
       {/* ATALHOS RÁPIDOS (QUICK GRID) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         
-        <div
+        {/* <div
           onClick={() => navigate('/student/test')}
           className="group p-5 bg-surface-container-lowest rounded-2xl border border-outline-variant/60 hover:border-primary/40 hover:shadow-md transition-all cursor-pointer space-y-3"
         >
@@ -146,7 +145,7 @@ export default function StudentHomePage() {
             </h3>
             <p className="text-xs text-on-surface-variant mt-0.5">Avalia as tuas aptidões e interesses.</p>
           </div>
-        </div>
+        </div> */}
 
         <div
           onClick={() => navigate('/student/results')}

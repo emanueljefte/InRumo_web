@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { calculateTestResult, isTie, type TestResult } from '../../application/test/calculateTestResult';
 import { COURSE_LABELS } from '../../domain/course/courseLabels';
-import { ArrowRight, Bot, CheckCircle2, RotateCcw, Scale, Sparkles, TrendingUp } from 'lucide-react';
+import {  CheckCircle2, RotateCcw, Scale, Sparkles, TrendingUp } from 'lucide-react';
 import type { CourseId } from '../../domain/test/TestQuestion';
+import { useAuth } from '../../application/auth/useAuth';
+import { SupabaseTestRepository } from '../../data/supabase/SupabaseTestRepository';
+import { associateAnonymousResult } from '../../application/test/associateAnonymousResult';
 
 export interface CourseScore {
   courseId: string;
@@ -17,13 +20,16 @@ function readTestResult(): TestResult | null {
 }
 
 export default function ResultsPage() {
-    const navigate = useNavigate();
-    const [result] = useState<TestResult | null>(() => readTestResult()); 
+  const navigate = useNavigate();
+  const { session } = useAuth();
+  const testRepository = useMemo(() => new SupabaseTestRepository(), []);
+  const [result] = useState<TestResult | null>(() => readTestResult());
+  const [associatingResult, setAssociatingResult] = useState<'idle' | 'done'>('idle');
 
-    const primaryCourseName = COURSE_LABELS[result!.recommended.courseId] || result?.recommended.courseId;
+  const primaryCourseName = COURSE_LABELS[result!.recommended.courseId] || result?.recommended.courseId;
   const runnerUpName = result?.runnerUp ? COURSE_LABELS[result.runnerUp.courseId] : '';
   const topPercentage = Math.round(result!.recommended.percentage);
-  
+
   useEffect(() => {
     if (!result) {
       navigate('/test', { replace: true });
@@ -39,20 +45,23 @@ export default function ResultsPage() {
         allScores: result.allScores.map((s) => ({ courseId: s.courseId, percentage: s.percentage })),
       })
     );
-  }, [result, navigate]);
 
+    if (session && associatingResult === 'idle') {
+    associateAnonymousResult(session.user.id, testRepository).finally(() => setAssociatingResult('done'));
+  }
+  }, [result, navigate, session, testRepository, associatingResult]);
+
+  const associating = Boolean(session) && associatingResult === 'idle';
   if (!result) return null;
 
   const tied = isTie(result);
 
-    if (!result) return null;
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6 md:p-10 font-body antialiased text-on-surface selection:bg-primary-container selection:text-on-primary-container">
 
-    return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6 md:p-10 font-body antialiased text-on-surface selection:bg-primary-container selection:text-on-primary-container">
-      
       {/* Container Principal */}
       <div className="max-w-xl w-full bg-surface-container-lowest rounded-3xl border border-outline-variant/60 p-6 sm:p-8 md:p-10 shadow-2xl space-y-8 text-center relative overflow-hidden my-auto">
-        
+
         {/* Glow de Fundo Decorativo */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -87,7 +96,7 @@ export default function ResultsPage() {
             </div>
           </div>
         ) : (
-          
+
           /* --- CASO 2: RESULTADO DIRETO / RECOMENDAÇÃO ÚNICA --- */
           <div className="space-y-4 relative z-10">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-semibold uppercase tracking-wider">
@@ -97,7 +106,7 @@ export default function ResultsPage() {
 
             {/* Destaque Visual em Círculo / Percentage Badge */}
             <div className="pt-2 flex flex-col items-center justify-center">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-primary/20 via-primary-container to-surface-container flex flex-col items-center justify-center border-4 border-background shadow-inner relative mb-2">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-linear-to-br from-primary/20 via-primary-container to-surface-container flex flex-col items-center justify-center border-4 border-background shadow-inner relative mb-2">
                 <span className="text-3xl sm:text-4xl font-extrabold font-heading text-primary leading-none">
                   {topPercentage}%
                 </span>
@@ -131,11 +140,10 @@ export default function ResultsPage() {
               return (
                 <div
                   key={score.courseId}
-                  className={`p-2.5 sm:p-3 rounded-xl border transition-colors flex items-center justify-between gap-3 ${
-                    isTop
+                  className={`p-2.5 sm:p-3 rounded-xl border transition-colors flex items-center justify-between gap-3 ${isTop
                       ? 'bg-primary/5 border-primary/30'
                       : 'bg-surface-container-low/50 border-outline-variant/30 hover:bg-surface-container-low'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     {isTop ? (
@@ -151,7 +159,7 @@ export default function ResultsPage() {
                   <div className="flex items-center gap-2.5 w-36 shrink-0 justify-end">
                     <div className="flex-1 bg-surface-container h-2 rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all duration-500 ${isTop ? 'bg-primary' : 'bg-outline'}`}
+                        className={`h-full rounded-full transition-all duration-500 ${isTop ? 'bg-primary' : 'bg-text-muted'}`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -166,28 +174,21 @@ export default function ResultsPage() {
         </div>
 
         {/* --- BOTÕES DE AÇÃO / CONVERSÃO --- */}
-        <div className="pt-4 space-y-3">
-          <button
-            type="button"
-            onClick={() =>
+         <div className="pt-4 space-y-3">
+          {session ? (
+            <button onClick={() => navigate('/candidate')} disabled={associating}
+              className="w-full bg-primary-container text-on-primary-container font-semibold px-6 py-3 rounded-xl disabled:opacity-50">
+              {associating ? 'A guardar...' : 'Ver no painel'}
+            </button>
+          ) : (
+            <button onClick={() =>
               navigate('/register/candidate', {
                 state: { recommendedCourse: result.recommended.courseId }
               })
-            }
-            className="w-full bg-primary text-on-primary font-semibold px-6 py-4 rounded-2xl hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg flex justify-center items-center gap-2.5 group active:scale-[0.98] cursor-pointer"
-          >
-            {tied ? (
-              <>
-                <Bot className="w-5 h-5 text-on-primary" />
-                <span>Criar Conta & Falar com Orientador IA</span>
-              </>
-            ) : (
-              <>
-                <span>Criar Conta e Ver Grade do Curso</span>
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </>
-            )}
-          </button>
+            } className="w-full bg-primary text-on-primary font-semibold px-6 py-4 rounded-2xl hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg flex justify-center items-center gap-2.5 group active:scale-[0.98] cursor-pointer">
+              {tied ? 'Criar conta e falar com o Orientador IA' : 'Criar conta e ver curso completo'}
+            </button>
+          )}
 
           <button
             type="button"
@@ -201,5 +202,5 @@ export default function ResultsPage() {
 
       </div>
     </div>
-    );
+  );
 }

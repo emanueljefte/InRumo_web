@@ -28,13 +28,13 @@ const CANDIDATE_NAV_ITEMS = [
 export default function CandidateDashboardLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const { signOut } = useAuth(); // precisa de expor signOut no AuthContext, se ainda não expõe
-const navigate = useNavigate();
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
 
-const handleLogout = async () => {
-  await signOut();
-  navigate('/landingpage', { replace: true });
-};
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/landingpage', { replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-[#fbf8ff] flex flex-col md:flex-row font-sans text-[#1a1b22] antialiased">

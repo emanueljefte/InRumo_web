@@ -21,7 +21,7 @@ export default function PendingVerificationPage() {
     if (profile?.verificationStatus === 'verified') {
       navigate('/student', { replace: true });
     } else if (profile?.verificationStatus === 'rejected') {
-      navigate('/complete-enrollment', { replace: true }); // pode tentar de novo com outro documento/número
+      navigate('/enrollment-rejected', { replace: true }); 
     }
   }, [profile, navigate]);
 

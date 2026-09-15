@@ -6,12 +6,20 @@ import { SupabaseNotificationRepository } from './SupabaseNotificationRepository
 
 type AvailabilityRow = { id: string; orientador_id: string; dia_semana: number; hora_inicio: string; hora_fim: string };
 
+type SessionRowWithProfile = SessionRow & {
+  profiles: { nome: string }[] | { nome: string } | null;
+};
+
 type SessionRow = {
     id: string;
     matriculado_id: string;
     orientador_id: string;
     data_hora: string;
     estado: 'marcada' | 'concluida' | 'cancelada';
+    modo: 'presencial' | 'online';
+    local: string | null;
+    notas_orientador: string | null;
+    motivo_cancelamento: string | null;
 };
 
 function mapAvailability(r: AvailabilityRow): AvailabilitySlot {
@@ -27,25 +35,30 @@ export class SupabaseScheduleRepository implements ScheduleRepository {
         }));
     }
 
-    async createSession(matriculadoId: string, orientadorId: string, dataHora: string) {
-        const { error } = await supabase.from('orientation_sessions').insert({
-            matriculado_id: matriculadoId, orientador_id: orientadorId, data_hora: dataHora,
-        });
-        if (error) {
+    async createSession(matriculadoId: string, orientadorId: string, dataHora: string, modo: 'presencial' | 'online', local?: string) {
+  const { error } = await supabase.from('orientation_sessions').insert({
+    matriculado_id: matriculadoId,
+    orientador_id: orientadorId,
+    data_hora: dataHora,
+    modo,
+    local: local ?? null,
+  });
+
+  if (error) {
     if (isSupabaseError(error) && error.code === '23505') {
       throw new Error('Este horário já foi reservado por outra pessoa. Escolhe outro.');
     }
     throw error;
   }
-        
-        const notificationRepo = new SupabaseNotificationRepository();
-        await notificationRepo.create(orientadorId, 'sessao_marcada', 'Uma nova sessão de orientação foi marcada.');
-    }
+
+  const notificationRepo = new SupabaseNotificationRepository();
+  await notificationRepo.create(orientadorId, 'sessao_marcada', 'Uma nova sessão de orientação foi marcada.');
+}
 
     async getSessionsForMatriculado(matriculadoId: string) {
         const { data, error } = await supabase
             .from('orientation_sessions')
-            .select('*')
+            .select('id, matriculado_id, orientador_id, data_hora, estado, modo, local, notas_orientador, motivo_cancelamento')
             .eq('matriculado_id', matriculadoId)
             .order('data_hora', { ascending: false });
         if (error) throw error;
@@ -66,7 +79,7 @@ export class SupabaseScheduleRepository implements ScheduleRepository {
     async getUpcomingSessions(orientadorIds: string[], from: Date, to: Date) {
         const { data, error } = await supabase
             .from('orientation_sessions')
-            .select('*')
+            .select('id, matriculado_id, orientador_id, data_hora, estado, modo, local, notas_orientador, motivo_cancelamento')
             .in('orientador_id', orientadorIds)
             .gte('data_hora', from.toISOString())
             .lte('data_hora', to.toISOString())
@@ -96,24 +109,58 @@ export class SupabaseScheduleRepository implements ScheduleRepository {
     async getSessionsForOrientador(orientadorId: string) {
         const { data, error } = await supabase
             .from('orientation_sessions')
-            .select('*, profiles!orientation_sessions_matriculado_id_fkey(nome)')
+            .select('id, matriculado_id, orientador_id, data_hora, estado, modo, local, notas_orientador, motivo_cancelamento, profiles!orientation_sessions_matriculado_id_fkey(nome)')
             .eq('orientador_id', orientadorId)
             .neq('estado', 'cancelada')
             .order('data_hora', { ascending: true });
         if (error) throw error;
 
-        return (data as (SessionRow & { profiles: { nome: string }[] })[]).map((r) => ({
-            ...mapSession(r),
-            matriculadoNome: r.profiles?.[0]?.nome ?? 'Matriculado',
-        }));
+        return (data as unknown as SessionRowWithProfile[]).map((r) => {
+  const profile = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
+
+  return {
+    ...mapSession(r as SessionRow),
+    matriculadoNome: profile?.nome ?? 'Matriculado',
+  };
+});
     }
 
     async concludeSession(sessionId: string) {
         const { error } = await supabase.from('orientation_sessions').update({ estado: 'concluida' }).eq('id', sessionId);
         if (error) throw error;
     }
+
+    async cancelSessionByOrientador(sessionId: string, motivo: string) {
+        const { error } = await supabase.from('orientation_sessions')
+            .update({ estado: 'cancelada', motivo_cancelamento: motivo })
+            .eq('id', sessionId);
+        if (error) throw error;
+
+        const { data: sessionData } = await supabase.from('orientation_sessions').select('matriculado_id').eq('id', sessionId).single();
+        if (sessionData) {
+            const notificationRepo = new SupabaseNotificationRepository();
+            await notificationRepo.create(sessionData.matriculado_id, 'sessao_cancelada', `A tua sessão foi cancelada pelo orientador: ${motivo}`);
+        }
+    }
+
+    async concludeSessionWithNotes(sessionId: string, notas: string) {
+        const { error } = await supabase.from('orientation_sessions')
+            .update({ estado: 'concluida', notas_orientador: notas })
+            .eq('id', sessionId);
+        if (error) throw error;
+    }
 }
 
 function mapSession(r: SessionRow): OrientationSession {
-    return { id: r.id, matriculadoId: r.matriculado_id, orientadorId: r.orientador_id, dataHora: r.data_hora, estado: r.estado };
+    return {
+        id: r.id,
+        matriculadoId: r.matriculado_id,
+        orientadorId: r.orientador_id,
+        dataHora: r.data_hora,
+        estado: r.estado,
+        modo: r.modo,
+        local: r.local,
+        notasOrientador: r.notas_orientador,
+        motivoCancelamento: r.motivo_cancelamento,
+    };
 }

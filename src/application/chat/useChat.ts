@@ -7,6 +7,8 @@ export function useChat(chatRepository: ChatRepository, chatId?: string) {
   const { session } = useAuth();
   const [chat, setChat] = useState<Chat | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!session) return;
@@ -26,10 +28,19 @@ export function useChat(chatRepository: ChatRepository, chatId?: string) {
     return chatRepository.subscribeToMessages(chat.id, (msg) => setMessages((prev) => [...prev, msg]));
   }, [chat, chatRepository]);
 
-  const sendMessage = (content: string, sender: MessageSender = 'user') =>
-    chat && chatRepository.sendMessage(chat.id, content, sender);
+  const sendMessage = async (content: string, sender: MessageSender = 'user') => {
+    if (!chat) return;
+    setError(null);
+    try {
+      await chatRepository.sendMessage(chat.id, content, sender);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Não foi possível enviar a mensagem.';
+      setError(message);
+      throw err; // continua a propagar, para quem chamou (ChatPage) também poder reagir
+    }
+  };
 
   const escalate = () => chat && chatRepository.escalateToHuman(chat.id);
 
-  return { chat, messages, sendMessage, escalate };
+  return { chat, messages, sendMessage, escalate, error };
 }

@@ -13,7 +13,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function loadProfile(userId: string) {
     const { data } = await supabase
       .from('profiles')
-      .select('id, nome, email, situacao, papel, curso_id, numero_processo, telefone, turno, ano_academico, verification_status, especialidade')
+      .select('id, nome, email, situacao, papel, curso_id, numero_processo, telefone, turno, ano_academico, verification_status, especialidade, registration_intent, avatar_url')
       .eq('id', userId)
       .single();
 
@@ -23,12 +23,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         cursoId: data.curso_id, numeroProcesso: data.numero_processo,
         telefone: data.telefone, turno: data.turno, anoAcademico: data.ano_academico,
         verificationStatus: data.verification_status,
-        especialidade: data.especialidade
+        especialidade: data.especialidade, avatarUrl: data.avatar_url,
+        registrationIntent: data.registration_intent
       } : null
     );
   }
 
-  // AuthProvider.tsx — adicionar subscrição Realtime ao profile do próprio utilizador
   useEffect(() => {
     if (!session) return;
 

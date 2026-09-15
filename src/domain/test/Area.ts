@@ -5,7 +5,7 @@ export type AreaId =
   | 'redes-computadores' | 'redes-moveis' | 'fibra-otica' | 'infraestrutura-telecom' | 'seguranca-redes' | 'comunicacao-satelite'
   | 'sistemas-informacao' | 'business-intelligence' | 'gestao-projetos-ti' | 'processos-organizacionais' | 'empreendedorismo-digital' | 'consultoria-tecnologica';
 
-// domain/test/Area.ts
+
 export const AREAS: Record<AreaId, { nome: string; cursoId: CourseId; descricao: string }> = {
   'dev-software': { nome: 'Desenvolvimento de Software', cursoId: 'eng-informatica', descricao: 'Construção de programas e aplicações, da lógica ao código.' },
   'eng-software': { nome: 'Engenharia de Software', cursoId: 'eng-informatica', descricao: 'Desenho, arquitectura e boas práticas na construção de sistemas de grande escala.' },

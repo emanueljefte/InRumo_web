@@ -21,6 +21,9 @@ type ExcelRow = {
   'Nome'?: string;
   'Curso'?: string;
   'Data de Nascimento'?: string | number;
+  'Telefone'?: string | number;
+  'Turno'?: string;
+  'Ano Académico'?: string;
   [key: string]: unknown;
 };
 
@@ -76,28 +79,31 @@ export default function ImportAdmittedStudentsPage() {
       const parseErrors: string[] = [];
 
       rows.forEach((row, index) => {
-        const rowNum = index + 2; // +2 considerando o cabeçalho
-        const processo = row['Número de Processo'] ? String(row['Número de Processo']).trim() : '';
-        const nome = row['Nome'] ? String(row['Nome']).trim() : '';
-        const cursoRaw = row['Curso'] ? String(row['Curso']).trim() : '';
+  const rowNum = index + 2;
+  const processo = row['Número de Processo'] ? String(row['Número de Processo']).trim() : '';
+  const nome = row['Nome'] ? String(row['Nome']).trim() : '';
+  const cursoRaw = row['Curso'] ? String(row['Curso']).trim() : '';
 
-        if (!processo || !nome || !cursoRaw) {
-          parseErrors.push(`Linha ${rowNum}: Campos obrigatórios em falta (Número de Processo, Nome ou Curso).`);
-          return;
-        }
+  if (!processo || !nome || !cursoRaw) {
+    parseErrors.push(`Linha ${rowNum}: Campos obrigatórios em falta (Número de Processo, Nome ou Curso).`);
+    return;
+  }
 
-        try {
-          const cursoId = mapCourseNameToId(cursoRaw);
-          validRows.push({
-            numeroProcesso: processo,
-            nome,
-            cursoId,
-            dataNascimento: row['Data de Nascimento'] ? String(row['Data de Nascimento']).trim() : undefined,
-          });
-        } catch (err) {
-          parseErrors.push(`Linha ${rowNum} [${nome}]: ${err instanceof Error ? err.message : 'Curso não reconhecido.'}`);
-        }
-      });
+  try {
+    const cursoId = mapCourseNameToId(cursoRaw);
+    validRows.push({
+      numeroProcesso: processo,
+      nome,
+      cursoId,
+      dataNascimento: row['Data de Nascimento'] ? String(row['Data de Nascimento']).trim() : undefined,
+      telefone: row['Telefone'] ? String(row['Telefone']).trim() : undefined,
+      turno: row['Turno'] ? String(row['Turno']).trim() : undefined,
+      anoAcademico: row['Ano Académico'] ? String(row['Ano Académico']).trim() : undefined,
+    });
+  } catch (err) {
+    parseErrors.push(`Linha ${rowNum} [${nome}]: ${err instanceof Error ? err.message : 'Curso não reconhecido.'}`);
+  }
+});
 
       setParsedState({
         validRows,
@@ -132,27 +138,33 @@ export default function ImportAdmittedStudentsPage() {
   };
 
   // Descarregar Modelo de Exemplo Excel
-  const handleDownloadTemplate = () => {
-    const templateData = [
-      {
-        'Número de Processo': '2026001',
-        'Nome': 'Emanuel Dingani',
-        'Curso': 'Engenharia Informática',
-        'Data de Nascimento': '2002-05-14'
-      },
-      {
-        'Número de Processo': '2026002',
-        'Nome': 'Ana Maria Silva',
-        'Curso': 'Engenharia de Telecomunicações',
-        'Data de Nascimento': '2001-11-20'
-      }
-    ];
+const handleDownloadTemplate = () => {
+  const templateData = [
+    {
+      'Número de Processo': '2026001',
+      'Nome': 'Rogério António',
+      'Curso': 'Engenharia Informática',
+      'Data de Nascimento': '2002-05-14',
+      'Telefone': '+244 923 111 222',
+      'Turno': 'Manhã',
+      'Ano Académico': '1.º Ano',
+    },
+    {
+      'Número de Processo': '2026002',
+      'Nome': 'Ana Maria Silva',
+      'Curso': 'Engenharia de Telecomunicações',
+      'Data de Nascimento': '2001-11-20',
+      'Telefone': '+244 923 222 333',
+      'Turno': 'Tarde',
+      'Ano Académico': '2.º Ano',
+    }
+  ];
 
-    const worksheet = XLSX.utils.json_to_sheet(templateData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Admitidos');
-    XLSX.writeFile(workbook, 'Modelo_Importacao_InRumo.xlsx');
-  };
+  const worksheet = XLSX.utils.json_to_sheet(templateData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Admitidos');
+  XLSX.writeFile(workbook, 'Modelo_Importacao_InRumo.xlsx');
+};
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">

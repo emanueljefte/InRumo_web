@@ -7,21 +7,20 @@ import {
   RotateCcw,
   ArrowRight,
   AlertTriangle,
-  CheckCircle2,
   HelpCircle,
-  Loader2
 } from 'lucide-react';
 import { AREAS } from '../../domain/test/Area';
-import type { AreaTestResult } from '../../domain/test/AreaScore';
+import type { AreaTestResult, StoredAreaResult } from '../../domain/test/AreaScore';
 import { useAuth } from '../../application/auth/useAuth';
 import { SupabaseTestRepository } from '../../data/supabase/SupabaseTestRepository';
-import { isAreaTie } from '../../application/test/calculateAreaResult';
+import { fromStoredAreaResult, isAreaTie } from '../../application/test/calculateAreaResult';
 
 function readAreaResult(): AreaTestResult | null {
   try {
     const raw = sessionStorage.getItem('matriculado_test_result');
     if (!raw) return null;
-    return JSON.parse(raw);
+    const stored: StoredAreaResult = JSON.parse(raw);
+    return fromStoredAreaResult(stored);
   } catch {
     return null;
   }
@@ -33,7 +32,7 @@ export default function MatriculadoResultsPage() {
   const testRepository = useMemo(() => new SupabaseTestRepository(), []);
   
   const [result] = useState<AreaTestResult | null>(() => readAreaResult());
-  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  // const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
 
   // Ref para garantir que a persistência só seja executada uma vez por sessão/resultado
@@ -49,7 +48,7 @@ export default function MatriculadoResultsPage() {
     hasAttemptedSave.current = true;
 
     async function persistResult() {
-      setStatus('saving');
+      // setStatus('saving');
       
       try {
         await testRepository.saveResult({
@@ -64,13 +63,13 @@ export default function MatriculadoResultsPage() {
         });
 
         if (isMounted) {
-          setStatus('saved');
+          // setStatus('saved');
           setSaveError(null);
         }
       } catch (err) {
         console.error('Erro ao guardar resultado:', err);
         if (isMounted) {
-          setStatus('error');
+          // setStatus('error');
           setSaveError('Não foi possível sincronizar o resultado. Os teus dados locais permanecem salvos.');
         }
       }
@@ -100,7 +99,7 @@ export default function MatriculadoResultsPage() {
         </div>
         <button
           type="button"
-          onClick={() => navigate('/tests')}
+          onClick={() => navigate('/student/test/format')}
           className="w-full inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-on-primary font-bold text-xs sm:text-sm px-6 py-3.5 rounded-2xl transition-all shadow-xs cursor-pointer"
         >
           <span>Realizar Teste Vocacional</span>
@@ -138,7 +137,7 @@ export default function MatriculadoResultsPage() {
             Especialização Recomendada
           </span>
 
-          {status === 'saving' && (
+          {/* {status === 'saving' && (
             <span className="inline-flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
               <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
               A guardar...
@@ -149,7 +148,7 @@ export default function MatriculadoResultsPage() {
             <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-bold">
               <CheckCircle2 className="w-3.5 h-3.5" /> Sincronizado
             </span>
-          )}
+          )} */}
         </div>
 
         {/* Nome da Área e Percentagem */}
@@ -206,7 +205,7 @@ export default function MatriculadoResultsPage() {
                   <div className="w-full bg-surface-container-high h-2.5 rounded-full overflow-hidden p-0.5">
                     <div
                       className={`h-full rounded-full transition-all duration-700 ${
-                        isTop ? 'bg-primary' : 'bg-border'
+                        isTop ? 'bg-primary' : 'bg-text-muted'
                       }`}
                       style={{ width: `${Math.max(score.percentage, 4)}%` }}
                     />
@@ -221,7 +220,7 @@ export default function MatriculadoResultsPage() {
         <div className="space-y-3 pt-2">
           <button
             type="button"
-            onClick={() => navigate('/chat')}
+            onClick={() => navigate('/student/chat')}
             className="w-full inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-on-primary font-bold text-xs sm:text-sm px-6 py-3.5 rounded-2xl transition-all shadow-xs cursor-pointer"
           >
             <MessageCircle className="w-4 h-4" />

@@ -37,7 +37,7 @@ export function RecommendedCourseCard({ result }: RecommendedCourseCardProps) {
       <div className="flex flex-col sm:flex-row gap-3 pt-2">
         <button
           type="button"
-          onClick={() => navigate(`/candidate/course/${result.recommendedCourseId}`)}
+          onClick={() => navigate(`/course/${result.recommendedCourseId}`)}
           className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-on-primary font-bold text-xs sm:text-sm px-6 py-3.5 rounded-2xl transition-all shadow-xs hover:shadow-primary/20 cursor-pointer group"
         >
           <span>Ver detalhes completos</span>

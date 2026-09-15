@@ -1,6 +1,6 @@
 import { AREAS, type AreaId } from '../../domain/test/Area';
 import type { CourseId } from '../../domain/test/TestQuestion';
-import type { AreaScore, AreaTestResult } from '../../domain/test/AreaScore';
+import type { AreaScore, AreaTestResult, StoredAreaResult } from '../../domain/test/AreaScore';
 import type { MatriculadoQuestion } from '../../domain/test/MatriculadoQuestion';
 import type { QuestionAnswer } from '../../domain/test/QuestionAnswer';
 import { scoreQuestion } from './scoring/scorers';
@@ -42,4 +42,18 @@ export function calculateAreaResult(
 
   const sorted = [...allScores].sort((a, b) => b.percentage - a.percentage);
   return { recommended: sorted[0], runnerUp: sorted[1] ?? null, allScores: sorted };
+}
+
+export function fromStoredAreaResult(stored: StoredAreaResult): AreaTestResult {
+  const allScores: AreaScore[] = stored.allScores.map((s) => ({
+    areaId: s.areaId,
+    percentage: s.percentage,
+    totalScore: 0,    // não persistido no sessionStorage, só a percentagem — não usado no ecrã de resultado
+    maxPossible: 0,   // idem
+  }));
+
+  const recommended = allScores.find((s) => s.areaId === stored.recommendedAreaId)!;
+  const runnerUp = stored.runnerUpAreaId ? allScores.find((s) => s.areaId === stored.runnerUpAreaId) ?? null : null;
+
+  return { recommended, runnerUp, allScores };
 }

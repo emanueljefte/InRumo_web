@@ -1,7 +1,11 @@
+import type { CourseId } from "../test/TestQuestion";
+
 export type EscalatedChat = {
   id: string;
   userId: string;
   userNome: string;
+  cursoId: CourseId | null;
+  areaNome: string | null;
   lastMessage: string;
   updatedAt: string;
 };

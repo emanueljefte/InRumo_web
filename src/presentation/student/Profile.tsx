@@ -1,4 +1,3 @@
-// presentation/student/StudentProfilePage.tsx
 import { useMemo, useState, useId } from 'react';
 import { Camera, Pencil, GraduationCap, User, AlertCircle, CheckCircle2, Loader2, Mail, Info } from 'lucide-react';
 import { useAuth } from '../../application/auth/useAuth';
@@ -18,9 +17,6 @@ export default function StudentProfilePage() {
 
   const nameInputId = useId();
   const emailInputId = useId();
-
-  console.log(profile);
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,21 +73,20 @@ export default function StudentProfilePage() {
         <div className="relative group shrink-0">
 
           {avatarUrl ? (
-            <img src={avatarUrl} alt={nome} className="w-full h-full rounded-full object-cover" />
+            <img src={avatarUrl} alt={nome} className="w-24 h-24 rounded-full object-cover" />
           ) : (
             <div className="w-24 h-24 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-heading text-3xl font-bold uppercase shadow-inner">
               {nome.charAt(0) || <User className="w-10 h-10" />}
             </div>
           )}
 
-          <button
-            type="button"
+          <label
             title="Alterar fotografia"
-            className="absolute bottom-0 right-0 p-2.5 bg-surface-container-high text-on-surface-variant border border-outline-variant/60 rounded-full shadow-xs opacity-80"
+            className="absolute bottom-0 right-0 p-2.5 bg-surface-container-high text-on-surface-variant border border-outline-variant/60 rounded-full shadow-xs hover:bg-primary hover:text-on-primary transition-all cursor-pointer flex items-center justify-center"
           >
             <Camera size={14} />
             <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleAvatarChange(e.target.files[0])} />
-          </button>
+          </label>
         </div>
 
         {/* Informação Rápida */}
@@ -171,8 +166,8 @@ export default function StudentProfilePage() {
               required
               placeholder="Introduz o teu nome"
               className={`w-full border rounded-2xl px-4 py-3 text-sm font-body text-on-surface transition-all focus:outline-none ${editing
-                  ? 'border-primary/50 bg-surface-container-lowest focus:ring-2 focus:ring-primary/30 shadow-xs'
-                  : 'border-outline-variant/40 bg-surface-container-low/50 text-on-surface-variant cursor-not-allowed'
+                ? 'border-primary/50 bg-surface-container-lowest focus:ring-2 focus:ring-primary/30 shadow-xs'
+                : 'border-outline-variant/40 bg-surface-container-low/50 text-on-surface-variant cursor-not-allowed'
                 }`}
             />
           </div>
@@ -248,6 +243,33 @@ export default function StudentProfilePage() {
               readOnly
               value={profile?.numeroProcesso ?? '—'}
               className="w-full bg-surface-container-low/50 font-mono text-xs font-bold text-primary px-4 py-3 rounded-2xl border border-outline-variant/40 cursor-not-allowed"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-on-surface">Ano Académico</label>
+            <input
+              readOnly
+              value={profile?.anoAcademico ?? '—'}
+              className="w-full bg-surface-container-low/50 text-xs font-semibold text-on-surface-variant px-4 py-3 rounded-2xl border border-outline-variant/40 cursor-not-allowed"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-on-surface">Turno</label>
+            <input
+              readOnly
+              value={profile?.turno ?? '—'}
+              className="w-full bg-surface-container-low/50 text-xs font-semibold text-on-surface-variant px-4 py-3 rounded-2xl border border-outline-variant/40 cursor-not-allowed"
+            />
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
+            <label className="block text-xs font-semibold text-on-surface">Telefone</label>
+            <input
+              readOnly
+              value={profile?.telefone ?? '—'}
+              className="w-full bg-surface-container-low/50 text-xs font-semibold text-on-surface-variant px-4 py-3 rounded-2xl border border-outline-variant/40 cursor-not-allowed"
             />
           </div>
         </div>

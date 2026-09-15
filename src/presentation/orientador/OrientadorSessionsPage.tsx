@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Calendar,
-  CheckCircle,
   CheckCircle2,
   Clock,
   CalendarX,
   Sparkles,
-  Loader2,
   Search
 } from 'lucide-react';
 import { useAuth } from '../../application/auth/useAuth';
@@ -18,12 +16,14 @@ type FilterTab = 'todas' | 'marcada' | 'concluida';
 export default function OrientadorSessionsPage() {
   const { session } = useAuth();
   const scheduleRepository = useMemo(() => new SupabaseScheduleRepository(), []);
-  
+
   const [sessions, setSessions] = useState<OrientationSessionWithNome[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<FilterTab>('marcada');
   const [searchQuery, setSearchQuery] = useState('');
+  const [actionModal, setActionModal] = useState<{ type: 'cancel' | 'conclude'; sessionId: string } | null>(null);
+  const [modalText, setModalText] = useState('');
 
   useEffect(() => {
     if (!session) return;
@@ -42,6 +42,19 @@ export default function OrientadorSessionsPage() {
     } finally {
       setActionLoadingId(null);
     }
+  };
+
+  const handleConfirmAction = async () => {
+    if (!actionModal) return;
+    if (actionModal.type === 'cancel') {
+      await scheduleRepository.cancelSessionByOrientador(actionModal.sessionId, modalText);
+      setSessions((prev) => prev.map((s) => s.id === actionModal.sessionId ? { ...s, estado: 'cancelada' } : s));
+    } else {
+      await scheduleRepository.concludeSessionWithNotes(actionModal.sessionId, modalText);
+      setSessions((prev) => prev.map((s) => s.id === actionModal.sessionId ? { ...s, estado: 'concluida' } : s));
+    }
+    setActionModal(null);
+    setModalText('');
   };
 
   // Filtros aplicados
@@ -91,7 +104,7 @@ export default function OrientadorSessionsPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      
+
       {/* ================= CABEÇALHO ================= */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -117,36 +130,33 @@ export default function OrientadorSessionsPage() {
 
       {/* ================= CONTROLES E ABAS DE FILTRO ================= */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        
+
         {/* Abas de Navegação */}
         <div className="flex items-center p-1 bg-surface-container-low rounded-2xl border border-outline-variant/40 shrink-0">
           <button
             onClick={() => setActiveTab('marcada')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === 'marcada'
-                ? 'bg-surface-container-lowest text-primary shadow-xs'
-                : 'text-on-surface-variant hover:text-on-surface'
-            }`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'marcada'
+              ? 'bg-surface-container-lowest text-primary shadow-xs'
+              : 'text-on-surface-variant hover:text-on-surface'
+              }`}
           >
             Agendadas ({counts.marcada})
           </button>
           <button
             onClick={() => setActiveTab('concluida')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === 'concluida'
-                ? 'bg-surface-container-lowest text-primary shadow-xs'
-                : 'text-on-surface-variant hover:text-on-surface'
-            }`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'concluida'
+              ? 'bg-surface-container-lowest text-primary shadow-xs'
+              : 'text-on-surface-variant hover:text-on-surface'
+              }`}
           >
             Concluídas ({counts.concluida})
           </button>
           <button
             onClick={() => setActiveTab('todas')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === 'todas'
-                ? 'bg-surface-container-lowest text-primary shadow-xs'
-                : 'text-on-surface-variant hover:text-on-surface'
-            }`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'todas'
+              ? 'bg-surface-container-lowest text-primary shadow-xs'
+              : 'text-on-surface-variant hover:text-on-surface'
+              }`}
           >
             Todas ({counts.todas})
           </button>
@@ -204,14 +214,13 @@ export default function OrientadorSessionsPage() {
                       <p className="font-heading font-bold text-sm sm:text-base text-on-surface truncate">
                         {s.matriculadoNome ?? 'Estudante'}
                       </p>
-                      
+
                       {/* Badge de Status */}
                       <span
-                        className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                          isPending
-                            ? 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
-                            : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
-                        }`}
+                        className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full ${isPending
+                          ? 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
+                          : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
+                          }`}
                       >
                         {isPending ? (
                           <>
@@ -250,16 +259,15 @@ export default function OrientadorSessionsPage() {
                       onClick={() => handleConclude(s.id)}
                       className="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-primary/10 hover:bg-primary text-primary hover:text-on-primary text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
-                      {isProcessing ? (
-                        <>
-                          <Loader2 size={14} className="animate-spin" />
-                          <span>Concluindo...</span>
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle size={15} />
-                          <span>Marcar como Concluída</span>
-                        </>
+                      {s.estado === 'marcada' && (
+                        <div className="flex gap-2">
+                          <button onClick={() => setActionModal({ type: 'conclude', sessionId: s.id })} className="text-primary text-xs font-semibold">
+                            Concluir
+                          </button>
+                          <button onClick={() => setActionModal({ type: 'cancel', sessionId: s.id })} className="text-error text-xs font-semibold">
+                            Cancelar
+                          </button>
+                        </div>
                       )}
                     </button>
                   ) : (
@@ -275,6 +283,28 @@ export default function OrientadorSessionsPage() {
         </div>
       )}
 
+      {actionModal && (
+        <div className="fixed inset-0 z-60 bg-on-surface/40 flex items-center justify-center p-4">
+          <div className="bg-surface-container-lowest rounded-2xl p-6 max-w-sm w-full space-y-4">
+            <p className="font-heading text-headline-sm text-on-surface">
+              {actionModal.type === 'cancel' ? 'Cancelar sessão' : 'Concluir sessão'}
+            </p>
+            <textarea
+              value={modalText}
+              onChange={(e) => setModalText(e.target.value)}
+              placeholder={actionModal.type === 'cancel' ? 'Motivo do cancelamento (visível ao estudante)' : 'Notas da sessão (opcional)'}
+              required={actionModal.type === 'cancel'}
+              className="w-full border border-outline-variant rounded-lg px-3 py-2.5 text-sm min-h-24"
+            />
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setActionModal(null)} className="px-4 py-2 text-sm font-medium">Voltar</button>
+              <button onClick={handleConfirmAction} className="px-4 py-2 text-sm font-semibold bg-primary text-white rounded-lg">
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
