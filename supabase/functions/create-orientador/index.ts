@@ -33,7 +33,9 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 403, headers: {...corsHeaders, 'Content-Type': 'application/json'}});
     }
 
-    const tempPassword = crypto.randomUUID().slice(0, 12);
+    // const tempPassword = crypto.randomUUID().slice(0, 12);
+
+    const tempPassword = 'InRumo16127';
 
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,

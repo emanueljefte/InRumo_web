@@ -12,11 +12,11 @@ import {
   Menu,
   X,
   Compass,
-  Bell,
   LogOut,
   Sparkles
 } from 'lucide-react';
 import { useAuth } from '../application/auth/useAuth';
+import { NotificationBell } from '../presentation/shared/NotificationBell';
 
 const NAV_ITEMS = [
   { to: '/student', label: 'Início', icon: Home },
@@ -29,7 +29,7 @@ const NAV_ITEMS = [
 export default function DashboardLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  
+
   const { profile, signOut } = useAuth();
   const location = useLocation();
 
@@ -40,7 +40,7 @@ export default function DashboardLayout() {
 
   return (
     <div className="h-screen w-full bg-surface-container-lowest/60 flex flex-col md:flex-row font-sans text-on-surface antialiased overflow-hidden">
-      
+
       {/* ================= HEADER MOBILE ================= */}
       <header className="md:hidden bg-surface-container-lowest border-b border-outline-variant/50 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-xs shrink-0">
         <div className="flex items-center gap-2.5">
@@ -85,7 +85,7 @@ export default function DashboardLayout() {
         `}
       >
         <div className="flex flex-col h-full min-h-0 overflow-hidden">
-          
+
           {/* LOGO E BOTÃO DE RECOLHER */}
           <div className={`flex items-center px-1 h-12 shrink-0 mb-6 transition-all duration-300 ${isCollapsed && !isMobileOpen ? 'justify-center' : 'justify-between'}`}>
             {isCollapsed && !isMobileOpen ? (
@@ -140,10 +140,9 @@ export default function DashboardLayout() {
                 end={to === '/student'}
                 onClick={() => setIsMobileOpen(false)}
                 className={({ isActive }) =>
-                  `group relative flex items-center gap-3.5 px-3.5 py-3 rounded-2xl text-xs sm:text-sm font-semibold transition-all duration-200 ${
-                    isActive
-                      ? 'bg-primary/10 text-primary shadow-xs'
-                      : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
+                  `group relative flex items-center gap-3.5 px-3.5 py-3 rounded-2xl text-xs sm:text-sm font-semibold transition-all duration-200 ${isActive
+                    ? 'bg-primary/10 text-primary shadow-xs'
+                    : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
                   } ${isCollapsed && !isMobileOpen ? 'justify-center px-0' : ''}`
                 }
               >
@@ -177,10 +176,9 @@ export default function DashboardLayout() {
             to="/student/profile"
             onClick={() => setIsMobileOpen(false)}
             className={({ isActive }) =>
-              `group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all ${
-                isActive
-                  ? 'bg-primary/10 text-primary'
-                  : 'hover:bg-surface-container-low text-on-surface'
+              `group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all ${isActive
+                ? 'bg-primary/10 text-primary'
+                : 'hover:bg-surface-container-low text-on-surface'
               } ${isCollapsed && !isMobileOpen ? 'justify-center px-0' : ''}`
             }
           >
@@ -209,12 +207,11 @@ export default function DashboardLayout() {
           <button
             type="button"
             onClick={() => signOut?.()}
-            className={`group relative w-full flex items-center gap-3 py-2.5 rounded-2xl text-xs font-medium text-error hover:bg-error/10 transition-colors cursor-pointer ${
-              isCollapsed && !isMobileOpen ? 'justify-center px-0' : 'px-3.5'
-            }`}
+            className={`group relative w-full flex items-center gap-3 py-2.5 rounded-2xl text-xs font-medium text-error hover:bg-error/10 transition-colors cursor-pointer ${isCollapsed && !isMobileOpen ? 'justify-center px-0' : 'px-3.5'
+              }`}
           >
             <LogOut size={16} className="shrink-0" />
-            
+
             {(!isCollapsed || isMobileOpen) && (
               <span>Sair da conta</span>
             )}
@@ -230,7 +227,7 @@ export default function DashboardLayout() {
 
       {/* ================= ÁREA DE CONTEÚDO PRINCIPAL (COM ROLAGEM INDEPENDENTE) ================= */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        
+
         {/* Topbar Desktop */}
         <header className="hidden md:flex items-center justify-between px-8 py-4 border-b border-outline-variant/30 bg-surface-container-lowest/40 backdrop-blur-md shrink-0">
           <div>
@@ -240,14 +237,8 @@ export default function DashboardLayout() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-xl transition-colors relative cursor-pointer"
-              title="Notificações"
-            >
-              <Bell size={18} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
-            </button>
+
+            <NotificationBell />
 
             <div className="h-4 w-px bg-outline-variant/50" />
 

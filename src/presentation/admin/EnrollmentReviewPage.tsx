@@ -10,7 +10,9 @@ import {
   X,
   AlertTriangle,
   Clock,
-  AlertCircle
+  AlertCircle,
+  User,
+  GraduationCap
 } from 'lucide-react';
 import { SupabaseEnrollmentReviewRepository } from '../../data/supabase/SupabaseEnrollmentReviewRepository';
 import { supabase } from '../../api/supabase';
@@ -123,22 +125,22 @@ export default function EnrollmentReviewPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6">
 
       {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-outline-variant/40">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-outline-variant/40">
         <div>
           <h1 className="font-heading text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">
             Validação de Comprovativos
           </h1>
-          <p className="font-body text-xs sm:text-sm text-on-surface-variant">
+          <p className="font-body text-xs sm:text-sm text-on-surface-variant mt-1">
             Aprove ou rejeite os recibos de pagamento de inscrição enviados pelos candidatos.
           </p>
         </div>
 
         {!loading && (
-          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-bold text-xs px-3.5 py-1.5 rounded-full self-start sm:self-auto border border-primary/20">
-            <Clock className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-bold text-xs px-3.5 py-2 rounded-full self-start sm:self-auto border border-primary/20 shrink-0">
+            <Clock className="w-4 h-4" />
             <span>{pending.length} Pendente{pending.length !== 1 ? 's' : ''}</span>
           </div>
         )}
@@ -146,24 +148,25 @@ export default function EnrollmentReviewPage() {
 
       {/* Alerta de Erro Geral */}
       {error && (
-        <div className="flex items-start gap-2.5 p-4 rounded-2xl bg-error/10 border border-error/20 text-xs font-semibold text-error">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-          <span>{error}</span>
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-error/10 border border-error/20 text-xs font-semibold text-error">
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+          <span className="leading-relaxed">{error}</span>
         </div>
       )}
 
       {/* Estado de Carregamento (Skeleton) */}
       {loading ? (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="animate-pulse bg-surface-container-lowest border border-outline-variant/40 rounded-2xl p-5 space-y-4">
               <div className="flex justify-between items-center">
-                <div className="h-5 w-40 bg-surface-container rounded-md" />
+                <div className="h-5 w-48 bg-surface-container rounded-md" />
                 <div className="h-4 w-24 bg-surface-container rounded-md" />
               </div>
-              <div className="flex justify-end gap-2">
-                <div className="h-9 w-24 bg-surface-container rounded-xl" />
-                <div className="h-9 w-24 bg-surface-container rounded-xl" />
+              <div className="h-4 w-1/3 bg-surface-container rounded-md" />
+              <div className="flex justify-end gap-2 pt-2">
+                <div className="h-10 w-28 bg-surface-container rounded-xl" />
+                <div className="h-10 w-36 bg-surface-container rounded-xl" />
               </div>
             </div>
           ))}
@@ -171,13 +174,13 @@ export default function EnrollmentReviewPage() {
       ) : pending.length === 0 ? (
 
         /* Estado Vazio */
-        <div className="text-center py-16 px-4 bg-surface-container-lowest border border-outline-variant/60 rounded-3xl space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
-            <Inbox className="w-6 h-6" />
+        <div className="text-center py-16 px-4 bg-surface-container-lowest border border-outline-variant/60 rounded-3xl space-y-4 shadow-xs">
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
+            <Inbox className="w-7 h-7" />
           </div>
           <div className="space-y-1 max-w-sm mx-auto">
             <h3 className="font-heading text-base font-bold text-on-surface">Tudo em dia!</h3>
-            <p className="font-body text-xs text-on-surface-variant">
+            <p className="font-body text-xs text-on-surface-variant leading-relaxed">
               Não existem comprovativos de inscrição pendentes de validação no momento.
             </p>
           </div>
@@ -193,27 +196,42 @@ export default function EnrollmentReviewPage() {
             return (
               <div
                 key={item.documentId}
-                className="bg-surface-container-lowest border border-outline-variant/60 rounded-2xl p-5 space-y-4 transition-all hover:border-outline-variant shadow-2xs"
+                className="bg-surface-container-lowest border border-outline-variant/60 rounded-2xl p-5 space-y-4 transition-all hover:border-outline-variant shadow-2xs overflow-hidden"
               >
-                {/* Informações do Candidato */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="space-y-1 min-w-0">
+                {/* Banner de Aviso de Processo Duplicado */}
+                {item.isDuplicate && (
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-error/10 border border-error/20 text-xs font-medium text-error">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>Atenção: Este número de processo já foi utilizado por outra conta verificada.</span>
+                  </div>
+                )}
+
+                {/* Informações Principais do Candidato */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1.5 min-w-0">
                     <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-primary shrink-0" />
                       <p className="font-body text-base font-bold text-on-surface truncate">
                         {item.userNome}
                       </p>
                     </div>
-                    {/* Exibe o id do utilizador ou email se disponível no objeto */}
-                    <p className="font-body text-xs text-on-surface-variant truncate">
-                      ID Candidato: <code className="bg-surface-container-low px-1.5 py-0.5 rounded text-[11px] font-mono">{item.userId.substring(0, 8)}...</code>
-                    </p>
+                    
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-on-surface-variant">
+                      <span>ID: <code className="bg-surface-container-low px-1.5 py-0.5 rounded text-[11px] font-mono">{item.userId.substring(0, 8)}...</code></span>
+                      <span className="hidden sm:inline">•</span>
+                      <div className="flex items-center gap-1 font-medium text-on-surface">
+                        <GraduationCap className="w-3.5 h-3.5 text-on-surface-variant" />
+                        <span>{item.cursoId ? COURSE_LABELS[item.cursoId] : 'Curso não seleccionado'}</span>
+                      </div>
+                    </div>
                   </div>
 
+                  {/* Botão para Ver Comprovativo */}
                   <button
                     type="button"
                     onClick={() => handleView(item)}
                     disabled={isLoadingThisPreview || isProcessing}
-                    className="inline-flex items-center justify-center gap-2 bg-surface-container-low hover:bg-surface-container-high text-primary font-semibold text-xs px-4 py-2.5 rounded-xl transition-all cursor-pointer border border-outline-variant/30 self-start sm:self-auto shrink-0"
+                    className="inline-flex items-center justify-center gap-2 bg-surface-container-low hover:bg-surface-container-high text-primary font-semibold text-xs px-4 py-2.5 rounded-xl transition-all cursor-pointer border border-outline-variant/30 self-start sm:self-auto shrink-0 disabled:opacity-50"
                   >
                     {isLoadingThisPreview ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -224,11 +242,11 @@ export default function EnrollmentReviewPage() {
                   </button>
                 </div>
 
-                {/* Linha Divisória Discreta */}
+                {/* Divisória Discreta */}
                 <div className="border-t border-outline-variant/30" />
 
                 {/* Ações de Decisão */}
-                <div className="flex items-center justify-end gap-2.5 pt-1">
+                <div className="flex items-center justify-end gap-3 pt-1">
                   <button
                     type="button"
                     onClick={() => setRejectingItem(item)}
@@ -238,15 +256,6 @@ export default function EnrollmentReviewPage() {
                     <XCircle className="w-4 h-4" />
                     <span>Rejeitar</span>
                   </button>
-
-                  <p className="font-body-sm text-xs text-on-surface-variant">
-                    {item.cursoId ? COURSE_LABELS[item.cursoId] : 'Curso não seleccionado'}
-                  </p>
-                  {item.isDuplicate && (
-                    <p className="text-xs text-error font-medium flex items-center gap-1">
-                      <AlertCircle className="w-3.5 h-3.5" /> Número de processo já usado por outra conta verificada
-                    </p>
-                  )}
 
                   <button
                     type="button"
@@ -270,11 +279,11 @@ export default function EnrollmentReviewPage() {
 
       {/* ================= MODAL PREVIEW DO COMPROVATIVO ================= */}
       {previewUrl && (
-        <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-surface-container-lowest border border-outline-variant/60 rounded-3xl w-full max-w-3xl h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-scaleIn">
+        <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
+          <div className="bg-surface-container-lowest border border-outline-variant/60 rounded-3xl w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-scaleIn">
 
             {/* Header do Modal */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/40 bg-surface-container-low">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/40 bg-surface-container-low">
               <div className="flex items-center gap-2 truncate">
                 <FileText className="w-5 h-5 text-primary shrink-0" />
                 <h3 className="font-heading font-bold text-sm sm:text-base text-on-surface truncate">
@@ -315,15 +324,15 @@ export default function EnrollmentReviewPage() {
 
       {/* ================= MODAL DE REJEIÇÃO ================= */}
       {rejectingItem && (
-        <div className="fixed inset-0 z-60 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-surface-container-lowest border border-outline-variant/60 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-xl animate-scaleIn">
+        <div className="fixed inset-0 z-60 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-surface-container-lowest border border-outline-variant/60 rounded-3xl p-6 max-w-md w-full space-y-5 shadow-xl animate-scaleIn">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-error/10 text-error">
+              <div className="p-2.5 rounded-2xl bg-error/10 text-error shrink-0">
                 <ShieldAlert className="w-6 h-6" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h3 className="font-heading font-bold text-base text-on-surface">Rejeitar Comprovativo</h3>
-                <p className="font-body text-xs text-on-surface-variant">
+                <p className="font-body text-xs text-on-surface-variant truncate mt-0.5">
                   Candidato: <strong className="text-on-surface">{rejectingItem.userNome}</strong>
                 </p>
               </div>
@@ -338,11 +347,11 @@ export default function EnrollmentReviewPage() {
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="Ex: Documento ilegível, talão incompleto ou valor incorreto."
                 rows={3}
-                className="w-full border border-outline-variant/60 rounded-2xl p-3 text-xs sm:text-sm text-on-surface bg-surface-container-lowest focus:outline-none focus:border-error focus:ring-2 focus:ring-error/20 transition-all placeholder:text-on-surface-variant/50"
+                className="w-full border border-outline-variant/60 rounded-2xl p-3 text-xs sm:text-sm text-on-surface bg-surface-container-lowest focus:outline-none focus:border-error focus:ring-2 focus:ring-error/20 transition-all placeholder:text-on-surface-variant/50 resize-none"
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex items-center justify-end gap-2.5 pt-1">
               <button
                 type="button"
                 onClick={() => {
@@ -350,7 +359,7 @@ export default function EnrollmentReviewPage() {
                   setRejectionReason('');
                 }}
                 disabled={processingId === rejectingItem.documentId}
-                className="px-4 py-2.5 text-xs font-semibold text-on-surface-variant hover:bg-surface-container rounded-xl transition-all cursor-pointer"
+                className="px-4 py-2.5 text-xs font-semibold text-on-surface-variant hover:bg-surface-container rounded-xl transition-all cursor-pointer disabled:opacity-50"
               >
                 Cancelar
               </button>

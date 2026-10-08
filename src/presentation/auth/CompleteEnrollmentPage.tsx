@@ -29,7 +29,7 @@ const COURSES: { id: CourseId; name: string }[] = [
 
 export default function CompleteEnrollmentPage() {
   const navigate = useNavigate();
-  const { session, profile, signOut } = useAuth();
+  const { session, profile, signOut, refreshProfile } = useAuth();
 
   const admissionRepo = useMemo(() => new SupabaseAdmissionVerificationRepository(), []);
   const documentRepo = useMemo(() => new SupabaseEnrollmentDocumentRepository(), []);
@@ -80,7 +80,6 @@ export default function CompleteEnrollmentPage() {
     setLoading(true);
 
     try {
-      console.log('cursoId', cursoId);
       
       const result = await completeMatriculadoVerification(
         session.user.id,
@@ -89,8 +88,10 @@ export default function CompleteEnrollmentPage() {
       );
 
       if (result.status === 'verified') {
+        await refreshProfile()
         navigate('/student', { replace: true });
       } else if (result.status === 'pending') {
+        await refreshProfile()
         navigate('/pending-verification', { replace: true });
       } else {
         // Estágio onde o sistema exige o envio do documento

@@ -4,7 +4,7 @@ export type ScheduleRepository = {
   getAvailability(): Promise<AvailabilitySlot[]>;
   getOrientadores(): Promise<OrientadorInfo[]>;
   getUpcomingSessions(orientadorIds: string[], from: Date, to: Date): Promise<OrientationSession[]>;
-  createSession(matriculadoId: string, orientadorId: string, dataHora: string, modo: 'presencial' | 'online', local?: string): Promise<void>;
+  createSession(matriculadoId: string, orientadorId: string, dataHora: string, modo: 'presencial' | 'online', local?: string): Promise<OrientationSession>
   getSessionsForMatriculado(matriculadoId: string): Promise<OrientationSession[]>;
   cancelSession(sessionId: string): Promise<void>;
   getMyAvailability(orientadorId: string): Promise<AvailabilitySlot[]>;  

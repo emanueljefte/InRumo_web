@@ -11,11 +11,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Compass,
-  Bell,
   Sparkles,
   UserCheck
 } from 'lucide-react';
 import { useAuth } from '../../application/auth/useAuth';
+import { NotificationBell } from '../shared/NotificationBell';
 
 const ORIENTADOR_NAV_ITEMS = [
   { to: '/orientador', label: 'Início', icon: Home },
@@ -243,14 +243,7 @@ export default function OrientadorLayout() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-xl transition-colors relative cursor-pointer"
-              title="Notificações"
-            >
-              <Bell size={18} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
-            </button>
+            <NotificationBell />
 
             <div className="h-4 w-px bg-outline-variant/50" />
 

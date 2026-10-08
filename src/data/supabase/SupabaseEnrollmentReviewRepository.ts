@@ -23,8 +23,6 @@ export class SupabaseEnrollmentReviewRepository implements EnrollmentReviewRepos
 
         if (error) throw error;
 
-        console.log('data', data);
-        
         const rows = data as unknown as PendingRow[];
 
         const items = rows.map((r) => ({
@@ -38,7 +36,7 @@ export class SupabaseEnrollmentReviewRepository implements EnrollmentReviewRepos
         }));
 
         console.log(items);
-        
+
 
         // verifica, para cada pendente, se o número de processo já existe verificado noutra conta
         const results = await Promise.all(items.map(async (item) => {
@@ -85,19 +83,21 @@ export class SupabaseEnrollmentReviewRepository implements EnrollmentReviewRepos
     }
 
     async rejectEnrollment(documentId: string, userId: string) {
-        const { error: docError } = await supabase
-            .from('enrollment_documents')
-            .update({ status: 'rejected', reviewed_at: new Date().toISOString() })
-            .eq('id', documentId);
+        // não rejeita a conta se já estiver verified entretanto (evita sobrescrever aprovação anterior)
+        const { data: currentProfile } = await supabase.from('profiles').select('verification_status').eq('id', userId).single();
+        if (currentProfile?.verification_status === 'verified') {
+            // só fecha este documento específico, sem mexer no estado da conta
+            await supabase.from('enrollment_documents').update({ status: 'rejected', reviewed_at: new Date().toISOString() }).eq('id', documentId);
+            return;
+        }
+
+        const { error: docError } = await supabase.from('enrollment_documents').update({ status: 'rejected', reviewed_at: new Date().toISOString() }).eq('id', documentId);
         if (docError) throw docError;
 
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .update({ verification_status: 'rejected' })
-            .eq('id', userId);
+        const { error: profileError } = await supabase.from('profiles').update({ verification_status: 'rejected' }).eq('id', userId);
         if (profileError) throw profileError;
 
         const notificationRepo = new SupabaseNotificationRepository();
-        await notificationRepo.create(userId, 'matricula_rejeitada', 'A tua matrícula não foi validada. Não tens acesso completo.');
+        await notificationRepo.create(userId, 'matricula_rejeitada', 'A tua matrícula não foi validada. Contacta a Administração Académica.');
     }
 }

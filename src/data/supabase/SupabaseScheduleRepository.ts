@@ -35,14 +35,12 @@ export class SupabaseScheduleRepository implements ScheduleRepository {
         }));
     }
 
-    async createSession(matriculadoId: string, orientadorId: string, dataHora: string, modo: 'presencial' | 'online', local?: string) {
-  const { error } = await supabase.from('orientation_sessions').insert({
-    matriculado_id: matriculadoId,
-    orientador_id: orientadorId,
-    data_hora: dataHora,
-    modo,
-    local: local ?? null,
-  });
+    async createSession(matriculadoId: string, orientadorId: string, dataHora: string, modo: 'presencial' | 'online', local?: string): Promise<OrientationSession> {
+  const { data, error } = await supabase
+    .from('orientation_sessions')
+    .insert({ matriculado_id: matriculadoId, orientador_id: orientadorId, data_hora: dataHora, modo, local: local ?? null })
+    .select()
+    .single();
 
   if (error) {
     if (isSupabaseError(error) && error.code === '23505') {
@@ -53,6 +51,8 @@ export class SupabaseScheduleRepository implements ScheduleRepository {
 
   const notificationRepo = new SupabaseNotificationRepository();
   await notificationRepo.create(orientadorId, 'sessao_marcada', 'Uma nova sessão de orientação foi marcada.');
+
+  return mapSession(data as SessionRow);
 }
 
     async getSessionsForMatriculado(matriculadoId: string) {
